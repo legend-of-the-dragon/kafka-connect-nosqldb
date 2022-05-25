@@ -16,7 +16,6 @@ import java.util.Map;
 public class KuduSinkConnectorConfig extends AbstractConnectorConfig {
 
     public static final String KUDU_MASTERS_KEY = "kudu.masters";
-
     public static final String DEFAULT_PARTITION_BUCKETS_KEY = "default.partition.buckets";
     public static final Integer DEFAULT_PARTITION_BUCKETS_DEFAULT = 5;
 
@@ -41,7 +40,6 @@ public class KuduSinkConnectorConfig extends AbstractConnectorConfig {
     }
 
     public final String kudu_masters;
-
     public final int defaultPartitionBuckets;
 
     public KuduSinkConnectorConfig(Map<String, String> props) {

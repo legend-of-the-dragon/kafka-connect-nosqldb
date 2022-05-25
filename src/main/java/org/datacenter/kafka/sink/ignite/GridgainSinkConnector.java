@@ -3,7 +3,6 @@ package org.datacenter.kafka.sink.ignite;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
-import org.datacenter.kafka.DataGrid;
 import org.datacenter.kafka.config.Version;
 import org.datacenter.kafka.config.ignite.IgniteSinkConnectorConfig;
 import org.slf4j.Logger;
@@ -23,12 +22,14 @@ public class GridgainSinkConnector extends SinkConnector {
 
     private static final Logger log = LoggerFactory.getLogger(GridgainSinkConnector.class);
 
-    private IgniteSinkConnectorConfig cfg;
+    private IgniteSinkConnectorConfig sinkConfig;
 
     @Override
     public void start(Map<String, String> map) {
-        this.cfg = new IgniteSinkConnectorConfig(map);
-        DataGrid.SINK.init(this.cfg.igniteCfg());
+
+        this.sinkConfig = new IgniteSinkConnectorConfig(map);
+
+        log.info("start ignite sink connector.");
     }
 
     @Override
@@ -44,7 +45,7 @@ public class GridgainSinkConnector extends SinkConnector {
             List<Map<String, String>> configs = new ArrayList<>(maxTasks);
 
             for (int i = 0; i < maxTasks; ++i) {
-                configs.add(this.cfg.originalsStrings());
+                configs.add(this.sinkConfig.originalsStrings());
             }
 
             return configs;
@@ -53,7 +54,8 @@ public class GridgainSinkConnector extends SinkConnector {
 
     @Override
     public void stop() {
-        DataGrid.SINK.close();
+
+        log.info("stop ignite sink connector.");
     }
 
     @Override

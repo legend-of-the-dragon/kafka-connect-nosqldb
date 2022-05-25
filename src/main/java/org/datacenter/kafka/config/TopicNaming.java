@@ -1,22 +1,15 @@
 package org.datacenter.kafka.config; //
 
 public final class TopicNaming {
-    private final String topicPrefix;
+    private final String topicReplacePrefix;
     private final String tableNamePrefix;
 
-    public TopicNaming(String topicPrefix, String tableNamePrefix) {
-        this.topicPrefix = topicPrefix;
-        this.tableNamePrefix = tableNamePrefix;
-    }
+    private final String tableNameFormat;
 
-    public String topicName(String cacheName) {
-        if (cacheName == null) {
-            throw new IllegalArgumentException("cacheName must not be null.");
-        } else {
-            return this.topicPrefix == null
-                    ? cacheName
-                    : String.format("%s%s", this.topicPrefix, cacheName);
-        }
+    public TopicNaming(String topicReplacePrefix, String tableNamePrefix, String tableNameFormat) {
+        this.topicReplacePrefix = topicReplacePrefix;
+        this.tableNamePrefix = tableNamePrefix;
+        this.tableNameFormat = tableNameFormat;
     }
 
     public String tableName(String topicName) {
@@ -24,11 +17,14 @@ public final class TopicNaming {
         if (topicName == null) {
             throw new IllegalArgumentException("topicName must not be null.");
         } else {
-
             String tempTableName =
-                    this.topicPrefix != null && topicName.startsWith(this.topicPrefix)
-                            ? topicName.substring(this.topicPrefix.length())
+                    this.topicReplacePrefix != null && topicName.startsWith(this.topicReplacePrefix)
+                            ? topicName.substring(this.topicReplacePrefix.length())
                             : topicName;
+
+            if (tableNameFormat != null) {
+                tempTableName = tempTableName.replaceAll("\\.", tableNameFormat);
+            }
 
             if (this.tableNamePrefix != null) {
                 return this.tableNamePrefix + tempTableName;

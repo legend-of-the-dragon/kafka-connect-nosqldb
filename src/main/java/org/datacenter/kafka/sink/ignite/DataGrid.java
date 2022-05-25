@@ -1,9 +1,10 @@
-package org.datacenter.kafka;
+package org.datacenter.kafka.sink.ignite;
 
-import org.apache.ignite.*;
-import org.apache.ignite.binary.BinaryObject;
+import org.apache.ignite.Ignite;
+import org.apache.ignite.IgniteBinary;
+import org.apache.ignite.IgniteDataStreamer;
+import org.apache.ignite.Ignition;
 import org.apache.ignite.configuration.IgniteConfiguration;
-import org.apache.ignite.services.Service;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +14,12 @@ import org.springframework.core.io.UrlResource;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 /**
+ * ignite 辅助工具类
+ *
  * @author sky @Date 2022-05-10
  * @discription
  */
@@ -119,17 +120,6 @@ public enum DataGrid implements AutoCloseable {
         }
     }
 
-    public Collection<String> cacheNames() {
-        this.ensureInitialized();
-        return this.ignite.cacheNames();
-    }
-
-    public IgniteCache<BinaryObject, BinaryObject> cache(String name) {
-        this.ensureInitialized();
-        IgniteCache<BinaryObject, BinaryObject> cache = this.ignite.cache(name);
-        return cache == null ? null : cache.withKeepBinary();
-    }
-
     public <K, V> IgniteDataStreamer<K, V> dataStreamer(String cacheName) {
         this.ensureInitialized();
         return this.ignite.dataStreamer(cacheName);
@@ -140,36 +130,9 @@ public enum DataGrid implements AutoCloseable {
         return this.ignite.binary();
     }
 
-    public void deployService(String name, Service svc) {
-        this.ensureInitialized();
-        this.ignite.services().deployClusterSingleton(name, svc);
-    }
-
-    public void removeService(String name) {
-        this.ensureInitialized();
-        this.ignite.services().cancel(name);
-    }
-
-    public <T> boolean isServiceDeployed(String name, Class<? super T> cls, Consumer<T> test) {
-        this.ensureInitialized();
-
-        try {
-            T svc = this.ignite.services().serviceProxy(name, cls, false);
-            test.accept(svc);
-            return true;
-        } catch (IgniteException var5) {
-            return false;
-        }
-    }
-
     public void ensureCache(String name) {
         this.ensureInitialized();
         this.ignite.getOrCreateCache(name);
-    }
-
-    public IgniteConfiguration configuration() {
-        this.ensureInitialized();
-        return this.ignite.configuration();
     }
 
     private void ensureInitialized() {

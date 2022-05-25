@@ -29,7 +29,7 @@ import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageE
  *
  * @author sky
  */
-public class KuduDialect extends AbstractDialect<Type> {
+public class KuduDialect extends AbstractDialect<KuduTable, Type> {
 
     private static final Logger log = LoggerFactory.getLogger(KuduDialect.class);
 
@@ -73,7 +73,7 @@ public class KuduDialect extends AbstractDialect<Type> {
         }
     }
 
-    private KuduTable getTable(String tableName) throws DbDdlException {
+    public KuduTable getTable(String tableName) throws DbDdlException {
 
         KuduTable kuduTable = kuduTableCache.get(tableName);
         if (kuduTable == null) {
@@ -454,7 +454,7 @@ public class KuduDialect extends AbstractDialect<Type> {
         Upsert upsert = kuduTable.newUpsert();
         PartialRow row = upsert.getRow();
 
-        for (Field field : sinkRecord.valueSchema().fields()) {
+        for (Field field : valueStruct.schema().fields()) {
             try {
                 addRowValues(tableName, row, field, valueStruct);
             } catch (Exception e) {
@@ -468,7 +468,7 @@ public class KuduDialect extends AbstractDialect<Type> {
                                 + ",fieldSchemaType:"
                                 + field.schema().type()
                                 + ",sinkRecordJson:"
-                                + JSON.toJSONString(sinkRecord)
+                                + JSON.toJSONString(valueStruct)
                                 + "}",
                         e);
             }
@@ -490,7 +490,7 @@ public class KuduDialect extends AbstractDialect<Type> {
         Delete delete = kuduTable.newDelete();
         PartialRow row = delete.getRow();
 
-        for (Field field : sinkRecord.keySchema().fields()) {
+        for (Field field : keyStruct.schema().fields()) {
             try {
                 addRowValues(tableName, row, field, keyStruct);
             } catch (Exception e) {
@@ -504,7 +504,7 @@ public class KuduDialect extends AbstractDialect<Type> {
                                 + ",fieldSchemaType:"
                                 + field.schema().type()
                                 + ",sinkRecordJson:"
-                                + JSON.toJSONString(sinkRecord)
+                                + JSON.toJSONString(keyStruct)
                                 + "}",
                         e);
             }
@@ -563,7 +563,7 @@ public class KuduDialect extends AbstractDialect<Type> {
     private void addRowValues(
             String tableName, final PartialRow row, final Field field, final Struct valueStruct) {
 
-        String columnName = field.name();
+               String columnName = field.name();
         String columnSchemaName = field.schema().name();
         Schema.Type columnType = field.schema().type();
 

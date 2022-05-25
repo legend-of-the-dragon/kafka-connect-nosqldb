@@ -15,8 +15,10 @@ import java.util.Map;
  */
 public class AbstractConnectorConfig extends AbstractConfig {
 
-    public static final String TOPIC_PREFIX_KEY = "topic.prefix";
+    public static final String TOPIC_REPLACE_PREFIX_KEY = "topic.replace.prefix";
 
+    public static final String TABLE_NAME_FORMAT_KEY = "table.name.format";
+    public static final String TABLE_NAME_FORMAT_DEFAULT = "_";
     public static final String TABLE_NAME_PREFIX_KEY = "table.name.prefix";
     public static final String TABLE_NAME_PREFIX_DEFAULT = "";
 
@@ -38,11 +40,22 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public static ConfigDef configDef() {
 
         return new ConfigDef()
-                .define(TOPIC_PREFIX_KEY, Type.STRING, "", Importance.HIGH, TOPIC_PREFIX_DOC)
+                .define(
+                        TOPIC_REPLACE_PREFIX_KEY,
+                        Type.STRING,
+                        "",
+                        Importance.HIGH,
+                        TOPIC_PREFIX_DOC)
                 .define(
                         TABLE_NAME_PREFIX_KEY,
                         Type.STRING,
                         TABLE_NAME_PREFIX_DEFAULT,
+                        Importance.LOW,
+                        "")
+                .define(
+                        TABLE_NAME_FORMAT_KEY,
+                        Type.STRING,
+                        TABLE_NAME_FORMAT_DEFAULT,
                         Importance.LOW,
                         "")
                 .define(
@@ -63,8 +76,12 @@ public class AbstractConnectorConfig extends AbstractConfig {
         return this.getInt(BATCH_SIZE_KEY);
     }
 
-    public String topicPrefix() {
-        return this.getString(TOPIC_PREFIX_KEY);
+    public String topicReplacePrefix() {
+        return this.getString(TOPIC_REPLACE_PREFIX_KEY);
+    }
+
+    private String table_name_format() {
+        return this.getString(TABLE_NAME_FORMAT_KEY);
     }
 
     public String tableNamePrefix() {
@@ -80,7 +97,8 @@ public class AbstractConnectorConfig extends AbstractConfig {
         }
     }
 
-    public final String topicPrefix;
+    public final String topicReplacePrefix;
+    public final String table_name_format;
     public final String tableNamePrefix;
     public final int batchSize;
     public final MessageExtract messageExtract;
@@ -89,7 +107,8 @@ public class AbstractConnectorConfig extends AbstractConfig {
 
         super(configDef, props);
 
-        this.topicPrefix = topicPrefix();
+        this.topicReplacePrefix = topicReplacePrefix();
+        this.table_name_format = table_name_format();
         this.tableNamePrefix = tableNamePrefix();
         this.batchSize = batchSize();
         this.messageExtract = messageExtract();

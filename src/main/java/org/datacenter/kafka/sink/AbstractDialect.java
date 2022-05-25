@@ -1,18 +1,20 @@
 package org.datacenter.kafka.sink;
 
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.apache.kudu.Type;
 
 /**
  * @author sky
  * @date 2022-05-24
  * @discription
  */
-public abstract class AbstractDialect <T>{
+public abstract class AbstractDialect<Table, Type> {
 
     public abstract boolean tableExists(String tableName) throws DbDdlException;
+
+    public abstract Table getTable(String tableName) throws DbDdlException;
 
     public abstract boolean compare(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException;
@@ -31,5 +33,5 @@ public abstract class AbstractDialect <T>{
 
     public abstract void stop() throws ConnectException;
 
-    public abstract T getDialectSchemaType(Schema.Type columnType, String columnSchemaName);
+    public abstract Type getDialectSchemaType(Schema.Type columnType, String columnSchemaName);
 }

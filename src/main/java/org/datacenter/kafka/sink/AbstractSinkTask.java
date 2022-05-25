@@ -25,7 +25,7 @@ public abstract class AbstractSinkTask extends SinkTask {
 
     protected AbstractConnectorConfig sinkConfig;
 
-    protected AbstractDialect<?> abstractDialect;
+    protected AbstractDialect<?, ?> abstractDialect;
 
     private Map<String, Pair<Schema, Schema>> oldTableSchamas = new HashMap<>();
 
@@ -59,11 +59,13 @@ public abstract class AbstractSinkTask extends SinkTask {
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())) {
                             schemaChanged(tableName, oldValueSchema, sinkRecord);
                         }
+
                         apply = abstractDialect.applyDeleteRecord(tableName, sinkRecord);
                     } else {
                         if (!Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
                             schemaChanged(tableName, sinkRecord.valueSchema(), sinkRecord);
                         }
+
                         apply = abstractDialect.applyUpsertRecord(tableName, sinkRecord);
                     }
                 } catch (Exception e) {
@@ -150,9 +152,12 @@ public abstract class AbstractSinkTask extends SinkTask {
         abstractDialect.stop();
     }
 
-    private String getTableName(String topic) {
+    public String getTableName(String topic) {
 
-        return (new TopicNaming(this.sinkConfig.topicPrefix, this.sinkConfig.tableNamePrefix))
+        return (new TopicNaming(
+                        this.sinkConfig.topicReplacePrefix,
+                        this.sinkConfig.tableNamePrefix,
+                        sinkConfig.table_name_format))
                 .tableName(topic);
     }
 }
