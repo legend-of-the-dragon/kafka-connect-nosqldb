@@ -6,7 +6,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.datacenter.kafka.config.AbstractConnectorConfig;
 import org.datacenter.kafka.config.TopicNaming;
-import org.datacenter.kafka.config.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +23,9 @@ public abstract class AbstractSinkTask extends SinkTask {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSinkTask.class);
 
-    private AbstractConnectorConfig sinkConfig;
+    protected AbstractConnectorConfig sinkConfig;
 
-    private AbstractDialect<?> abstractDialect;
+    protected AbstractDialect<?> abstractDialect;
 
     private Map<String, Pair<Schema, Schema>> oldTableSchamas = new HashMap<>();
 

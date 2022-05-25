@@ -3,6 +3,7 @@ package org.datacenter.kafka.sink.kudu;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
+import org.datacenter.kafka.config.AbstractConnectorConfig;
 import org.datacenter.kafka.config.Version;
 import org.datacenter.kafka.config.kudu.KuduSinkConnectorConfig;
 import org.slf4j.Logger;
@@ -22,12 +23,13 @@ public class KuduSinkConnector extends SinkConnector {
 
     private static final Logger log = LoggerFactory.getLogger(KuduSinkConnector.class);
 
-    private KuduSinkConnectorConfig sinkConfig;
+    private AbstractConnectorConfig sinkConfig;
 
     @Override
     public void start(Map<String, String> map) {
 
         this.sinkConfig = new KuduSinkConnectorConfig(map);
+        log.info("start kudu sink connector.");
     }
 
     @Override
@@ -51,7 +53,10 @@ public class KuduSinkConnector extends SinkConnector {
     }
 
     @Override
-    public void stop() {}
+    public void stop() {
+
+        log.info("stop kudu sink connector.");
+    }
 
     @Override
     public ConfigDef config() {
@@ -60,6 +65,7 @@ public class KuduSinkConnector extends SinkConnector {
 
     @Override
     public String version() {
+        log.info("get kudu sink connector version.");
         return Version.getVersion();
     }
 }

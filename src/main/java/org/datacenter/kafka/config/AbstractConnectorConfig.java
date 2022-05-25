@@ -17,7 +17,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
 
     public static final String TOPIC_PREFIX_KEY = "topic.prefix";
 
-    public static final String TABLE_PREFIX_KEY = "table.name.prefix";
+    public static final String TABLE_NAME_PREFIX_KEY = "table.name.prefix";
     public static final String TABLE_NAME_PREFIX_DEFAULT = "";
 
     public static final String MESSAGE_EXTRACT_KEY = "message.extract";
@@ -37,10 +37,10 @@ public class AbstractConnectorConfig extends AbstractConfig {
 
     public static ConfigDef configDef() {
 
-        return (new ConfigDef())
+        return new ConfigDef()
                 .define(TOPIC_PREFIX_KEY, Type.STRING, "", Importance.HIGH, TOPIC_PREFIX_DOC)
                 .define(
-                        TABLE_NAME_PREFIX_DEFAULT,
+                        TABLE_NAME_PREFIX_KEY,
                         Type.STRING,
                         TABLE_NAME_PREFIX_DEFAULT,
                         Importance.LOW,
@@ -68,7 +68,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
     }
 
     public String tableNamePrefix() {
-        return this.getString(TABLE_PREFIX_KEY);
+        return this.getString(TABLE_NAME_PREFIX_KEY);
     }
 
     private MessageExtract messageExtract() {
@@ -85,9 +85,9 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public final int batchSize;
     public final MessageExtract messageExtract;
 
-    public AbstractConnectorConfig(Map<String, String> props) {
+    public AbstractConnectorConfig(ConfigDef configDef, Map<String, String> props) {
 
-        super(configDef(), props);
+        super(configDef, props);
 
         this.topicPrefix = topicPrefix();
         this.tableNamePrefix = tableNamePrefix();
