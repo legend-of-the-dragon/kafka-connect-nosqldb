@@ -57,7 +57,10 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     private KuduClient getKuduClient() {
 
         if (kuduClient == null) {
-            return new KuduClient.KuduClientBuilder(sinkConfig.kudu_masters).build();
+            String[] kuduMasters = sinkConfig.kudu_masters.split(",");
+            java.util.ArrayList<String> kuduMasterList = new ArrayList<>(kuduMasters.length);
+            Collections.addAll(kuduMasterList, kuduMasters);
+            return new KuduClient.KuduClientBuilder(kuduMasterList).build();
         } else {
             return kuduClient;
         }
@@ -563,7 +566,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     private void addRowValues(
             String tableName, final PartialRow row, final Field field, final Struct valueStruct) {
 
-               String columnName = field.name();
+        String columnName = field.name();
         String columnSchemaName = field.schema().name();
         Schema.Type columnType = field.schema().type();
 

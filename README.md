@@ -1,35 +1,45 @@
 # Kafka Connect JDBC Connector
 
-kafka-connect-jdbc is a [Kafka Connector](http://kafka.apache.org/documentation.html#connect)
-for loading data to and from any JDBC-compatible database.
+[kafka-connect-nosqldb](http://gitlab.9f.cn/data-center/kafka-connect-nosqldb.git)
+是一个由大数据部开发的为了解决从kafka消费数据sink到nosql的基于kafka connect的插件。目前通过java api 支持ignite和kudu。
 
-Documentation for this connector can be found [here](http://docs.confluent.io/current/connect/connect-jdbc/docs/index.html).
+# Documentation
+
+## kafka consumer 参数
+
+| 参数名称             | 默认值 | 说明                           |
+|------------------|-----|------------------------------|
+| max.poll.records | 500 | 一次从kafka最多拉取的消息条数，建议设置为10000 |
+
+## 公共参数
+
+| 参数名称                 | 默认值               | 说明                                                  |
+|----------------------|-------------------|-----------------------------------------------------|
+| topic.replace.prefix | ""                | 按照配置的内容作为前缀把topicName的值替换掉.                         |
+| table.name.format    | "_"               | 把剩余的tableName中的'.'替换成配置的内容                          |
+| table.name.prefix    | ""                | 按照配置的内容作为前缀加上把剩余的tableName作为新的tableName             |
+| message.extract      | "SCHEMA_REGISTRY" | kafka中存储的数据行的数据结构，值的选项为"SCHEMA_REGISTRY"、"DEBEZIUM" |
+| batch.size           | 10000             | 一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现    |
+
+## ignite 参数
+
+| 参数名称                  | 默认值  | 说明                                                                                                                      |
+|-----------------------|------|-------------------------------------------------------------------------------------------------------------------------|
+| ignite.cfg            | 无默认值 | Path to the Ignite configuration file. $IGNITE_HOME/config/default-config.xml is used if no Ignite config is configured |
+| shall.process.updates | true | 是否支持upsert，这个不建议改，目前只支持upsert                                                                                           |
+
+## kudu 参数
+
+| 参数名称                      | 默认值  | 说明                                   |
+|---------------------------|------|--------------------------------------|
+| kudu.masters              | 无默认值 | kafka master ip，多个master可以用","隔开     |
+| default.partition.buckets | 5    | 自动创建kudu表的时候，主键的HashPartitions 设置的数值 |
 
 # Development
 
-To build a development version you'll need a recent version of Kafka as well as a set of upstream Confluent projects, which you'll have to build from their appropriate snapshot branch. See the [FAQ](https://github.com/confluentinc/kafka-connect-jdbc/wiki/FAQ)
-for guidance on this process.
+You can build kafka-connect-nosqldb with Maven using the standard lifecycle phases.
 
-You can build kafka-connect-jdbc with Maven using the standard lifecycle phases.
-
-# FAQ
-
-Refer frequently asked questions on Kafka Connect JDBC here -
-https://github.com/confluentinc/kafka-connect-jdbc/wiki/FAQ
-
-# Contribute
-
-Contributions can only be accepted if they contain appropriate testing. For example, adding a new dialect of JDBC will require an integration test.
-
-- Source Code: https://github.com/confluentinc/kafka-connect-jdbc
-- Issue Tracker: https://github.com/confluentinc/kafka-connect-jdbc/issues
-- Learn how to work with the connector's source code by reading our [Development and Contribution guidelines](CONTRIBUTING.md).
-
-# Information
-
-For more information, check the documentation for the JDBC connector on the [confluent.io](https://docs.confluent.io/current/connect/kafka-connect-jdbc/index.html) website. Questions related to the connector can be asked on [Community Slack](https://launchpass.com/confluentcommunity) or the [Confluent Platform Google Group](https://groups.google.com/forum/#!topic/confluent-platform/).
-
-# License
-
-This project is licensed under the [Confluent Community License](LICENSE).
+```shell
+mvn clean package -Dmaven.test.skip=true  -Dcheckstyle.skip=true -Dmaven.javadoc.skip=true -Pstandalone
+```
 

@@ -25,7 +25,6 @@ public class IgniteSinkConnectorConfig extends AbstractConnectorConfig {
             "Path to the Ignite configuration file. $IGNITE_HOME/config/default-config.xml is used if no Ignite config is configured";
     private static final String SHALL_PROCESS_UPDATES_DOC =
             "Indicates if overwriting or removing existing values in the sink cache is enabled. Sink connector performs better if this flag is disabled.";
-    private static final String DB_TIMEZONE_KEY = "db.timezone";
 
     public static ConfigDef configDef() {
 
