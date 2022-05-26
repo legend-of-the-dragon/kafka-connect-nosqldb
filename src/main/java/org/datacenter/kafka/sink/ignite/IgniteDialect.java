@@ -100,10 +100,10 @@ public class IgniteDialect
                         (Struct) sinkRecord.value(), sinkConfig.messageExtract);
 
         BinaryObject keyBinaryObject =
-                createIgniteBinaryObject(keyStruct, tableName + VALUE_SUFFIX);
+                createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
 
         BinaryObject valueBinaryObject =
-                createIgniteBinaryObject(valueStruct, tableName + KEY_SUFFIX);
+                createIgniteBinaryObject(valueStruct, tableName + VALUE_SUFFIX);
 
         dataStreamer.addData(keyBinaryObject, valueBinaryObject);
 
@@ -120,7 +120,7 @@ public class IgniteDialect
                         (Struct) sinkRecord.key(), sinkConfig.messageExtract);
 
         BinaryObject keyBinaryObject =
-                createIgniteBinaryObject(keyStruct, tableName + VALUE_SUFFIX);
+                createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
 
         dataStreamer.removeData(keyBinaryObject);
 
@@ -237,7 +237,7 @@ public class IgniteDialect
                         SinkRecordTypeTransform.getTime(
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (timeValue != null) {
-                    return timeValue.toString();
+                    return timeValue;
                 }
                 break;
             case DATE:

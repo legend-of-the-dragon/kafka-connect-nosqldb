@@ -16,7 +16,7 @@ import java.util.Objects;
 
 /**
  * @author sky
- * @date 2022-05-
+ * @date 2022-05-25
  * @discription
  */
 public abstract class AbstractSinkTask extends SinkTask {
@@ -25,9 +25,11 @@ public abstract class AbstractSinkTask extends SinkTask {
 
     protected AbstractConnectorConfig sinkConfig;
 
-    protected AbstractDialect<?, ?> abstractDialect;
+    protected AbstractDialect<?, ?> dialect;
 
-    private Map<String, Pair<Schema, Schema>> oldTableSchamas = new HashMap<>();
+    private final Map<String, Pair<Schema, Schema>> oldTableSchamas = new HashMap<>();
+
+    public abstract String getDialectName();
 
     public void put(Collection<SinkRecord> records) {
 
@@ -35,7 +37,8 @@ public abstract class AbstractSinkTask extends SinkTask {
         if (recordsCount > 0) {
 
             log.info(
-                    "kudu sink Received {} records.  Writing them to the database...",
+                    "{} sink Received {} records.  Writing them to the database...",
+                    getDialectName(),
                     recordsCount);
 
             int writeCount = 0;
@@ -60,17 +63,17 @@ public abstract class AbstractSinkTask extends SinkTask {
                             schemaChanged(tableName, oldValueSchema, sinkRecord);
                         }
 
-                        apply = abstractDialect.applyDeleteRecord(tableName, sinkRecord);
+                        apply = dialect.applyDeleteRecord(tableName, sinkRecord);
                     } else {
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())
                                 || !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
                             schemaChanged(tableName, sinkRecord.valueSchema(), sinkRecord);
                         }
 
-                        apply = abstractDialect.applyUpsertRecord(tableName, sinkRecord);
+                        apply = dialect.applyUpsertRecord(tableName, sinkRecord);
                     }
                 } catch (Exception e) {
-                    throw new DbDmlException("kuduDialect apply exception.", e);
+                    throw new DbDmlException(getDialectName() + " sinkTask apply exception.", e);
                 }
 
                 if (apply) {
@@ -80,11 +83,11 @@ public abstract class AbstractSinkTask extends SinkTask {
                         writeCount = 0;
                     }
                 } else {
-                    throw new DbDmlException("apply sinkRecod exception.");
+                    throw new DbDmlException(getDialectName() + " apply sinkRecod exception.");
                 }
             }
             flushAll();
-            log.info("kudu sink write {} records. ", recordsCount);
+            log.info("{} sink write {} records. ", getDialectName(), recordsCount);
         }
     }
 
@@ -109,29 +112,29 @@ public abstract class AbstractSinkTask extends SinkTask {
                 newValueSchema = oldValueSchema;
             } else {
                 // TODO 这种情况属于初始化的时候，但是第一条记录是删除，怎么办？
-                log.error("这种情况属于初始化的时候，但是第一条记录是删除，怎么办？");
+                log.error("这种情况属于初始化的时候，但是第一条记录是删除，怎么办？{}", getDialectName());
             }
         } else {
             newValueSchema = sinkRecord.valueSchema();
         }
 
-        boolean tableExists = abstractDialect.tableExists(tableName);
+        boolean tableExists = dialect.tableExists(tableName);
 
         if (tableExists) {
 
             // 对比schemaRegister中的schema和DB中的schema的差异，如果没有差异，加载即可，如果有差异，变更表结构
-            boolean compare = abstractDialect.compare(tableName, newKeySchema, newValueSchema);
+            boolean compare = dialect.compare(tableName, newKeySchema, newValueSchema);
             if (!compare) {
 
                 flushAll();
 
-                abstractDialect.alterTable(tableName, newKeySchema, newValueSchema);
+                dialect.alterTable(tableName, newKeySchema, newValueSchema);
             }
         } else {
 
             flushAll();
 
-            abstractDialect.createTable(tableName, newKeySchema, newValueSchema);
+            dialect.createTable(tableName, newKeySchema, newValueSchema);
         }
 
         Pair<Schema, Schema> schemaPair = Pair.of(newKeySchema, newValueSchema);
@@ -140,15 +143,15 @@ public abstract class AbstractSinkTask extends SinkTask {
 
     private void flushAll() {
         try {
-            abstractDialect.flush();
+            dialect.flush();
         } catch (Exception e) {
-            log.error("kuduDialect flush error." + e.getMessage());
-            throw new DbDmlException("kuduDialect flush error.", e);
+            log.error("{} sinkTask flush error.", getDialectName(), e);
+            throw new DbDmlException(getDialectName() + " sinkTask flush error.", e);
         }
     }
 
     public void stop() {
-        abstractDialect.stop();
+        dialect.stop();
     }
 
     public String getTableName(String topic) {

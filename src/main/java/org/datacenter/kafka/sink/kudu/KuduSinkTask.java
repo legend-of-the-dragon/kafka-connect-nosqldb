@@ -1,6 +1,5 @@
 package org.datacenter.kafka.sink.kudu;
 
-import org.datacenter.kafka.config.TopicNaming;
 import org.datacenter.kafka.config.Version;
 import org.datacenter.kafka.config.kudu.KuduSinkConnectorConfig;
 import org.datacenter.kafka.sink.AbstractSinkTask;
@@ -18,6 +17,12 @@ import java.util.Map;
 public final class KuduSinkTask extends AbstractSinkTask {
 
     private static final Logger log = LoggerFactory.getLogger(KuduSinkTask.class);
+    private static final String dialectName = "kudu";
+
+    @Override
+    public String getDialectName() {
+        return dialectName;
+    }
 
     public String version() {
         return Version.getVersion();
@@ -26,9 +31,8 @@ public final class KuduSinkTask extends AbstractSinkTask {
     public void start(Map<String, String> map) {
 
         this.sinkConfig = new KuduSinkConnectorConfig(map);
-        this.abstractDialect = new KuduDialect((KuduSinkConnectorConfig) sinkConfig);
+        this.dialect = new KuduDialect((KuduSinkConnectorConfig) sinkConfig);
 
         log.info("Kudu Sink task started");
     }
-
 }
