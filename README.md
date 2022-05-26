@@ -20,9 +20,9 @@
 
 | 参数名称                 | 是否必填 | 默认值               | 说明                                                                                                                                                                            |
 |----------------------|------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| topic.replace.prefix | 否    | ""                | 按照配置的内容作为前缀把topicName的值替换掉. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,topic.replace.prefix为"db51044.sky_test."则会导致tableName变为t_wk_quota_biz.                           |
+| topic.replace.prefix | 否    | null              | 按照配置的内容作为前缀把topicName的值替换掉. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,topic.replace.prefix为"db51044.sky_test."则会导致tableName变为t_wk_quota_biz.                           |
 | table.name.format    | 否    | "_"               | 把剩余的tableName中的'.'替换成配置的内容. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,table.name.format为"_"则会导致tableName变为db51044_sky_test_t_wk_quota_biz。注意topic.replace.prefix会优先执行. |
-| table.name.prefix    | 否    | ""                | 按照配置的内容作为前缀加上把剩余的tableName作为新的tableName                                                                                                                                       |
+| table.name.prefix    | 否    | null              | 按照配置的内容作为前缀加上把剩余的tableName作为新的tableName                                                                                                                                       |
 | message.extract      | 否    | "SCHEMA_REGISTRY" | kafka中存储的数据行的数据结构，值的选项为"SCHEMA_REGISTRY"、"DEBEZIUM"                                                                                                                           |
 | batch.size           | 否    | 10000             | 一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现                                                                                                                              |
 

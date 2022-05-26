@@ -16,7 +16,7 @@ import java.util.Map;
 public class AbstractConnectorConfig extends AbstractConfig {
 
     public static final String TOPIC_REPLACE_PREFIX_KEY = "topic.replace.prefix";
-    public static final String TOPIC_REPLACE_PREFIX_DEFAULT = "";
+    public static final String TOPIC_REPLACE_PREFIX_DEFAULT = null;
     private static final String TOPIC_REPLACE_PREFIX_DOC =
             "按照配置的内容作为前缀把topicName的值替换掉. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,topic.replace.prefix为\"db51044.sky_test.\"则会导致tableName变为t_wk_quota_biz.";
 
@@ -26,7 +26,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
             "把剩余的tableName中的'.'替换成配置的内容. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,table.name.format为\"_\"则会导致tableName变为db51044_sky_test_t_wk_quota_biz。注意topic.replace.prefix会优先执行.";
 
     public static final String TABLE_NAME_PREFIX_KEY = "table.name.prefix";
-    public static final String TABLE_NAME_PREFIX_DEFAULT = "";
+    public static final String TABLE_NAME_PREFIX_DEFAULT = null;
     private static final String TABLE_NAME_PREFIX_DOC =
             "按照配置的内容作为前缀加上把剩余的tableName作为新的tableName.eg:tableName已经为t_wk_quota_biz的时候，table.name.prefix配置为\"test_\",最终的tableName则为test_t_wk_quota_biz.";
 
