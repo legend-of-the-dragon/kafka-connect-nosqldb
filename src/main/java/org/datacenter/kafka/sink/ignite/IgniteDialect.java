@@ -144,7 +144,6 @@ public class IgniteDialect
         try {
             return binaryObjectBuilder.build();
         } catch (BinaryObjectException e) {
-            log.error("ignite sink createIgniteBinaryObject exception", e);
             throw new ConnectException("ignite sink createIgniteBinaryObject exception", e);
         }
     }

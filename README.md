@@ -5,6 +5,11 @@
 
 # Documentation
 
+### 注意事项
+
+1. ignite目前创建表结构的时候千万不能配错，一旦配错非常难定位问题，而且修复的时候删除不只是用sql删除表，还需要通过原生API删除cache。
+2. kudu目前对alter语句支持比较有限，如果出现alter的时候，保险起见，删除kudu中的表，删除kafka中的topic，重新抽一遍当前表。
+
 ## kafka consumer 参数
 
 | 参数名称             | 是否必填 | 默认值 | 说明                           |
