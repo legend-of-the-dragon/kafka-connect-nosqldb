@@ -63,7 +63,7 @@ public abstract class AbstractSinkTask extends SinkTask {
                         apply = abstractDialect.applyDeleteRecord(tableName, sinkRecord);
                     } else {
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())
-                                && !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
+                                || !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
                             schemaChanged(tableName, sinkRecord.valueSchema(), sinkRecord);
                         }
 
@@ -109,13 +109,11 @@ public abstract class AbstractSinkTask extends SinkTask {
                 newValueSchema = oldValueSchema;
             } else {
                 // TODO 这种情况属于初始化的时候，但是第一条记录是删除，怎么办？
-                log.warn("");
+                log.error("这种情况属于初始化的时候，但是第一条记录是删除，怎么办？");
             }
         } else {
             newValueSchema = sinkRecord.valueSchema();
         }
-
-        boolean createOrAmendIfNecessary;
 
         boolean tableExists = abstractDialect.tableExists(tableName);
 

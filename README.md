@@ -1,4 +1,4 @@
-# Kafka Connect JDBC Connector
+# Kafka Connect nosqldb Connector
 
 [kafka-connect-nosqldb](http://gitlab.9f.cn/data-center/kafka-connect-nosqldb.git)
 是一个由大数据部开发的为了解决从kafka消费数据sink到nosql的基于kafka connect的插件。目前通过java api 支持ignite和kudu。

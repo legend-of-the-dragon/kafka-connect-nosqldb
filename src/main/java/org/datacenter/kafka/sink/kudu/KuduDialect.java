@@ -470,6 +470,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             try {
                 addRowValues(tableName, row, field, valueStruct);
             } catch (Exception e) {
+                String sinkRecordJson = JSON.toJSONString(valueStruct);
                 throw new DbDmlException(
                         "addRowValues error:{tableName:"
                                 + tableName
@@ -480,7 +481,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 + ",fieldSchemaType:"
                                 + field.schema().type()
                                 + ",sinkRecordJson:"
-                                + JSON.toJSONString(valueStruct)
+                                + sinkRecordJson
                                 + "}",
                         e);
             }
