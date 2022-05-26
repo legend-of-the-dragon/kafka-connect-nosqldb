@@ -62,7 +62,8 @@ public abstract class AbstractSinkTask extends SinkTask {
 
                         apply = abstractDialect.applyDeleteRecord(tableName, sinkRecord);
                     } else {
-                        if (!Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
+                        if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())
+                                && !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
                             schemaChanged(tableName, sinkRecord.valueSchema(), sinkRecord);
                         }
 

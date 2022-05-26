@@ -16,21 +16,29 @@ import java.util.Map;
 public class AbstractConnectorConfig extends AbstractConfig {
 
     public static final String TOPIC_REPLACE_PREFIX_KEY = "topic.replace.prefix";
+    public static final String TOPIC_REPLACE_PREFIX_DEFAULT = "";
+    private static final String TOPIC_REPLACE_PREFIX_DOC =
+            "按照配置的内容作为前缀把topicName的值替换掉. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,topic.replace.prefix为\"db51044.sky_test.\"则会导致tableName变为t_wk_quota_biz.";
 
     public static final String TABLE_NAME_FORMAT_KEY = "table.name.format";
     public static final String TABLE_NAME_FORMAT_DEFAULT = "_";
+    private static final String TABLE_NAME_FORMAT_DOC =
+            "把剩余的tableName中的'.'替换成配置的内容. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,table.name.format为\"_\"则会导致tableName变为db51044_sky_test_t_wk_quota_biz。注意topic.replace.prefix会优先执行.";
+
     public static final String TABLE_NAME_PREFIX_KEY = "table.name.prefix";
     public static final String TABLE_NAME_PREFIX_DEFAULT = "";
+    private static final String TABLE_NAME_PREFIX_DOC =
+            "按照配置的内容作为前缀加上把剩余的tableName作为新的tableName.eg:tableName已经为t_wk_quota_biz的时候，table.name.prefix配置为\"test_\",最终的tableName则为test_t_wk_quota_biz.";
 
     public static final String MESSAGE_EXTRACT_KEY = "message.extract";
     public static final String MESSAGE_EXTRACT_DEFAULT = "SCHEMA_REGISTRY";
+
+    private static final String MESSAGE_EXTRACT_DOC =
+            "kafka中存储的数据行的数据结构，值的选项为\"SCHEMA_REGISTRY\"、\"DEBEZIUM\"";
     public static final String BATCH_SIZE_KEY = "batch.size";
     public static final Integer BATCH_SIZE_DEFAULT = 10000;
-
     private static final String BATCH_SIZE_DOC =
-            "Maximum number of entries to send to Ignite in single batch.";
-    private static final String TOPIC_PREFIX_DOC =
-            "Kafka topic is built from this prefix and cache name.";
+            "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 
     public enum MessageExtract {
         DEBEZIUM,
@@ -43,21 +51,21 @@ public class AbstractConnectorConfig extends AbstractConfig {
                 .define(
                         TOPIC_REPLACE_PREFIX_KEY,
                         Type.STRING,
-                        "",
+                        TOPIC_REPLACE_PREFIX_DEFAULT,
                         Importance.HIGH,
-                        TOPIC_PREFIX_DOC)
+                        TOPIC_REPLACE_PREFIX_DOC)
                 .define(
                         TABLE_NAME_PREFIX_KEY,
                         Type.STRING,
                         TABLE_NAME_PREFIX_DEFAULT,
                         Importance.LOW,
-                        "")
+                        TABLE_NAME_PREFIX_DOC)
                 .define(
                         TABLE_NAME_FORMAT_KEY,
                         Type.STRING,
                         TABLE_NAME_FORMAT_DEFAULT,
                         Importance.LOW,
-                        "")
+                        TABLE_NAME_FORMAT_DOC)
                 .define(
                         BATCH_SIZE_KEY,
                         Type.INT,
@@ -69,7 +77,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
                         Type.STRING,
                         MESSAGE_EXTRACT_DEFAULT,
                         Importance.LOW,
-                        "");
+                        MESSAGE_EXTRACT_DOC);
     }
 
     public Integer batchSize() {

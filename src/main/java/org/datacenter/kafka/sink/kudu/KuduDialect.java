@@ -66,13 +66,22 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         }
     }
 
+    Map<String, Boolean> tableExistsCache = new HashMap<>();
+
     @Override
     public boolean tableExists(String tableName) throws DbDdlException {
 
-        try {
-            return getKuduClient().tableExists(tableName);
-        } catch (KuduException e) {
-            throw new DbDdlException("kudu tableExists Exception.", e);
+        Boolean tableExists = tableExistsCache.get(tableName);
+        if (tableExists != null) {
+            return tableExists;
+        } else {
+            try {
+                tableExists = getKuduClient().tableExists(tableName);
+                tableExistsCache.put(tableName, tableExists);
+                return tableExists;
+            } catch (KuduException e) {
+                throw new DbDdlException("kudu tableExists Exception.", e);
+            }
         }
     }
 
