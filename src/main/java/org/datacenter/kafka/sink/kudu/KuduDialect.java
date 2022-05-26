@@ -158,7 +158,6 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         KuduTable kuduTable;
         try {
             kuduTable = getKuduClient().openTable(tableName);
-            kuduTableCache.put(tableName, kuduTable);
         } catch (KuduException e) {
             throw new DbDdlException("获取kudu表异常.", e);
         }
@@ -280,7 +279,9 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             getKuduClient().alterTable(tableName, alterTableOptions);
             boolean alterTableDone = getKuduClient().isAlterTableDone(tableName);
             if (alterTableDone) {
-                getKuduTable(tableName);
+                kuduTable = getKuduTable(tableName);
+                kuduTableCache.put(tableName, kuduTable);
+                tableExistsCache.put(tableName, true);
                 log.info("alter table done:{}", tableName);
             }
         } catch (KuduException e) {
@@ -359,8 +360,11 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             getKuduClient().createTable(tableName, tableSchema, createTableOptions);
             boolean createTableDone = getKuduClient().isCreateTableDone(tableName);
             if (createTableDone) {
-                getKuduTable(tableName);
-                log.info("create table:{}", tableName);
+
+                KuduTable kuduTable = getKuduTable(tableName);
+                kuduTableCache.put(tableName, kuduTable);
+                tableExistsCache.put(tableName, true);
+                log.info("created table:{}", tableName);
             }
         } catch (KuduException e) {
             throw new DbDdlException(
