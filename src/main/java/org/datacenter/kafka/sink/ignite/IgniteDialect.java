@@ -245,7 +245,7 @@ public class IgniteDialect
                         SinkRecordTypeTransform.getDate(
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (dateValue != null) {
-                    return dateValue.toString();
+                    return dateValue;
                 }
                 break;
             case TIMESTAMP:
