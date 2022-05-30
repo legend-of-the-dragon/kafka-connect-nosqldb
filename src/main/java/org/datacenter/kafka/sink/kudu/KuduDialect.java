@@ -260,12 +260,13 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                         alterTableOptions.dropColumn(columnName);
                     } else {
                         Field field = keySchema.field(columnName);
+                        Map<String, String> schemaParameters = field.schema().parameters();
                         ColumnSchema columnSchema =
                                 getColumnSchema(
                                         field.name(),
                                         field.schema().name(),
                                         field.schema().type(),
-                                        field.schema().defaultValue(),
+                                        schemaParameters,
                                         true);
                         alterTableOptions.addColumn(columnSchema);
                     }
@@ -277,12 +278,13 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                         alterTableOptions.dropColumn(columnName);
                     } else {
                         Field field = valueSchema.field(columnName);
+                        Map<String, String> schemaParameters = field.schema().parameters();
                         ColumnSchema columnSchema =
                                 getColumnSchema(
                                         field.name(),
                                         field.schema().name(),
                                         field.schema().type(),
-                                        field.schema().defaultValue(),
+                                        schemaParameters,
                                         false);
                         alterTableOptions.addColumn(columnSchema);
                     }
@@ -338,6 +340,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         for (Field field : valueSchema.fields()) {
 
             String fieldName = field.name();
+            Map<String, String> schemaParameters = field.schema().parameters();
             boolean isKey = keyNames.contains(fieldName);
             try {
                 ColumnSchema columnSchema =
@@ -345,7 +348,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 fieldName,
                                 field.schema().name(),
                                 field.schema().type(),
-                                field.schema().defaultValue(),
+                                schemaParameters,
                                 isKey);
 
                 columnSchemas.add(columnSchema);
@@ -396,7 +399,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             String fieldName,
             String fieldSchemaName,
             Schema.Type fieldSchemaType,
-            Object defaultValue,
+            Map<String, String> schemaParameters,
             boolean isKey) {
 
         ColumnSchema.ColumnSchemaBuilder columnSchemaBuilder;
@@ -417,7 +420,32 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
 
             // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
             if (kuduSchemaType.equals(Type.DECIMAL)) {
-                ColumnTypeAttributes columnTypeAttributes = DecimalUtil.typeAttributes(20, 4);
+                String precisionString = schemaParameters.get("connect.decimal.precision");
+                String scaleString = schemaParameters.get("scale");
+                int precision = 20;
+                int scale = 4;
+                if (precisionString != null) {
+                    try {
+                        precision = Integer.parseInt(precisionString);
+                    } catch (Exception e) {
+                        log.error(
+                                "fieldName:{},处理decimal字段类型的时候，precision获取错误。precisionString:{}",
+                                fieldName,
+                                precisionString);
+                    }
+                }
+                if (scaleString != null) {
+                    try {
+                        scale = Integer.parseInt(scaleString);
+                    } catch (Exception e) {
+                        log.error(
+                                "fieldName:{},处理decimal字段类型的时候，scale获取错误。scaleString:{}",
+                                fieldName,
+                                scaleString);
+                    }
+                }
+                ColumnTypeAttributes columnTypeAttributes =
+                        DecimalUtil.typeAttributes(precision, scale);
                 columnSchemaBuilder.typeAttributes(columnTypeAttributes);
             }
         } else {
