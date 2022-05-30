@@ -35,9 +35,9 @@
 
 ```
 注意: 创建ignite表结构的时候，需要在WITH设置以下几个参数：
-CACHE_NAME=<${tableName}>; tableNamekafka connect中的，和ignite中的tableName可以保持一致，也可以不保持一致
-KEY_TYPE=<${CACHE_NAME}.Key">
-VALUE_TYPE=<$CACHE_NAME}.Value">
+CACHE_NAME=<${tableName}>; tableName是kafka connect中的topic经过配置后的最终表名，和ignite中的tableName可以保持一致，也可以不保持一致;
+KEY_TYPE=<${CACHE_NAME}.Key">;
+VALUE_TYPE=<$CACHE_NAME}.Value">;
 ```
 
 ## kudu 参数
