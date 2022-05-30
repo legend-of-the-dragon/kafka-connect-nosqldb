@@ -110,9 +110,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     public boolean compare(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
-        // 通过kafka connect中的schema构建预期的kudu table schema
+        // 1、通过kafka connect中的schema构建预期的kudu table schema
         HashMap<String, Type> keyColumnSchemaTypes = new HashMap<>();
-        HashMap<String, Type> valueColumnSchemaTypes = new HashMap<>();
         keySchema
                 .fields()
                 .forEach(
@@ -121,37 +120,52 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                         field.name(),
                                         getDialectSchemaType(
                                                 field.schema().type(), field.schema().name())));
-        valueSchema
-                .fields()
-                .forEach(
-                        field ->
-                                valueColumnSchemaTypes.put(
-                                        field.name(),
-                                        getDialectSchemaType(
-                                                field.schema().type(), field.schema().name())));
 
-        // 获取真实的 kudu table schema
+        // 2、获取真实的 kudu table schema
         KuduTable kuduTable = getTable(tableName);
         List<ColumnSchema> primaryKeyColumnSchemas = kuduTable.getSchema().getPrimaryKeyColumns();
-        List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
 
-        // 把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
+        // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
         HashMap<String, Type> kuduTableKeyColumnTypes = new HashMap<>();
         primaryKeyColumnSchemas.forEach(
                 columnSchema ->
                         kuduTableKeyColumnTypes.put(
                                 columnSchema.getName(), columnSchema.getType()));
-
-        HashMap<String, Type> kuduTableColumnTypes = new HashMap<>();
-        columnSchemas.forEach(
-                columnSchema ->
-                        kuduTableColumnTypes.put(columnSchema.getName(), columnSchema.getType()));
-
-        // 对比预期的kudu table schema和真实的 kudu table schema
+        // 4、对比预期的kudu table schema和真实的 kudu table schema
         boolean keyEquals = keyColumnSchemaTypes.equals(kuduTableKeyColumnTypes);
-        boolean valueEquals = valueColumnSchemaTypes.equals(kuduTableColumnTypes);
 
-        return keyEquals && valueEquals;
+        // 如果启动的时候刚好是delete record，valueSchema==null
+        if (valueSchema != null) {
+            // 1、通过kafka connect中的schema构建预期的kudu table schema
+            HashMap<String, Type> valueColumnSchemaTypes = new HashMap<>();
+            valueSchema
+                    .fields()
+                    .forEach(
+                            field ->
+                                    valueColumnSchemaTypes.put(
+                                            field.name(),
+                                            getDialectSchemaType(
+                                                    field.schema().type(), field.schema().name())));
+
+            // 2、获取真实的 kudu table schema
+            List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
+
+            // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
+            HashMap<String, Type> kuduTableColumnTypes = new HashMap<>();
+            columnSchemas.forEach(
+                    columnSchema ->
+                            kuduTableColumnTypes.put(
+                                    columnSchema.getName(), columnSchema.getType()));
+
+            // 4、对比预期的kudu table schema和真实的 kudu table schema
+            boolean valueEquals = valueColumnSchemaTypes.equals(kuduTableColumnTypes);
+
+            // 5、返回对比结果
+            return keyEquals && valueEquals;
+        } else {
+            // 5、返回对比结果
+            return keyEquals;
+        }
     }
 
     private KuduTable getKuduTable(String tableName) {
@@ -403,7 +417,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
 
             // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
             if (kuduSchemaType.equals(Type.DECIMAL)) {
-                ColumnTypeAttributes columnTypeAttributes = DecimalUtil.typeAttributes(18, 2);
+                ColumnTypeAttributes columnTypeAttributes = DecimalUtil.typeAttributes(20, 4);
                 columnSchemaBuilder.typeAttributes(columnTypeAttributes);
             }
         } else {
