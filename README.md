@@ -14,7 +14,7 @@
 
 | 参数名称             | 是否必填 | 默认值 | 说明                           |
 |------------------|------|-----|------------------------------|
-| consumer.max.poll.records | 否    | 500 | 一次从kafka最多拉取的消息条数，建议设置为10000 .这个参数设置在kafka connect 服务器的connect-avro-distributed.properties|
+| consumer.max.poll.records | 否    | 500 | 一次从kafka最多拉取的消息条数，建议设置为5000 .这个参数设置在kafka connect 服务器的connect-avro-distributed.properties文件中. |
 
 ## 公共参数
 
