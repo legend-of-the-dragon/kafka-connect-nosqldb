@@ -33,11 +33,11 @@
 | ignite.cfg            |  是   | 无默认值 | Path to the Ignite configuration file. $IGNITE_HOME/config/default-config.xml is used if no Ignite config is configured |
 | shall.process.updates |  否   | true | 是否支持upsert，这个不建议改，目前只支持upsert                                                                                           |
 
-```
-注意: 创建ignite表结构的时候，需要在WITH设置以下几个参数：
-CACHE_NAME=<${tableName}>; tableName是kafka connect中的topic经过配置后的最终表名，和ignite中的tableName可以保持一致，也可以不保持一致;
-KEY_TYPE=<${CACHE_NAME}.Key">;
-VALUE_TYPE=<${CACHE_NAME}.Value">;
+```shell
+# 注意: 创建ignite表结构的时候，需要在WITH设置以下几个参数：
+# CACHE_NAME=<${tableName}>; tableName是kafka connect中的topic经过配置后的最终表名，和ignite中的tableName可以保持一致，也可以不保持一致;
+# KEY_TYPE=<${CACHE_NAME}.Key">;
+# VALUE_TYPE=<${CACHE_NAME}.Value">;
 ```
 
 ## kudu 参数
