@@ -88,8 +88,8 @@ public abstract class AbstractSinkTask extends SinkTask {
                     writeCount++;
                     if (writeCount >= sinkConfig.batchSize) {
                         flushAll();
-                        writeCount = 0;
                         log.info("{} sink flush {} records. ", getDialectName(), writeCount);
+                        writeCount = 0;
                     }
                 } else {
                     throw new DbDmlException(getDialectName() + " flushAll sinkRecod exception.");
