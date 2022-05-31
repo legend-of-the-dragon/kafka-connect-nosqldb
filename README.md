@@ -6,15 +6,15 @@
 # Documentation
 
 ### 注意事项
-
-1. ignite目前创建表结构的时候千万不能配错，一旦配错非常难定位问题，而且修复的时候删除不只是用sql删除表，还需要通过原生API删除cache。
-2. kudu目前对alter语句支持比较有限，如果出现alter的时候，保险起见，删除kudu中的表，删除kafka中的topic，重新抽一遍当前表。
+1、debezium写kafka的时候，尽可能一个topic只有一个分区，不然一些莫名其妙的问题都会因为分区出现，尤其是delete导致的问题。
+2. ignite目前创建表结构的时候千万不能配错，一旦配错非常难定位问题，而且修复的时候删除不只是用sql删除表，还需要通过原生API删除cache。
+3. kudu目前对alter语句支持比较有限，如果出现alter的时候，保险起见，删除kudu中的表，删除kafka中的topic，重新抽一遍当前表。
 
 ## kafka consumer 参数
 
 | 参数名称             | 是否必填 | 默认值 | 说明                           |
 |------------------|------|-----|------------------------------|
-| consumer.max.poll.records | 否    | 500 | 一次从kafka最多拉取的消息条数，建议设置为5000 .这个参数设置在kafka connect 服务器的connect-avro-distributed.properties文件中. |
+| consumer.max.poll.records | 否    | 500 | 一次从kafka最多拉取的消息条数，建议设置为1000 .这个参数设置在kafka connect 服务器的connect-avro-distributed.properties文件中. |
 
 ## 公共参数
 
@@ -24,7 +24,7 @@
 | table.name.format    | 否    | "_"               | 把剩余的tableName中的'.'替换成配置的内容. eg: topicName为db51044.sky_test.t_wk_quota_biz的时候,table.name.format为"_"则会导致tableName变为db51044_sky_test_t_wk_quota_biz。注意topic.replace.prefix会优先执行. |
 | table.name.prefix    | 否    | null              | 按照配置的内容作为前缀加上把剩余的tableName作为新的tableName                                                                                                                                       |
 | message.extract      | 否    | "SCHEMA_REGISTRY" | kafka中存储的数据行的数据结构，值的选项为"SCHEMA_REGISTRY"、"DEBEZIUM"                                                                                                                           |
-| batch.size           | 否    | 10000             | 一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现                                                                                                                              |
+| batch.size           | 否    | 1000             | 一次写数据库的最大条数。 注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.kudu超过有可能会导致buffer不够，还得调整buffer的大小.                                                                                                                             |
 
 ## ignite 参数
 

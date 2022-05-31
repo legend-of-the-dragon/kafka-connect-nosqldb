@@ -1,6 +1,5 @@
 package org.datacenter.kafka.sink.kudu;
 
-import com.alibaba.fastjson.JSON;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
@@ -23,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.*;
 
 import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageExtract;
+import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
 
 /**
  * KuduDialect
@@ -182,9 +182,13 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     public void alterTable(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
-        // 通过kafka connect中的schema构建预期的kudu table schema
+        KuduTable kuduTable = getTable(tableName);
+        AlterTableOptions alterTableOptions = new AlterTableOptions();
+        Map<String, Type> changeKeyColumnSchemaTypes = new HashMap<>();
+        Map<String, Type> changeValueColumnSchemaTypes = new HashMap<>();
+
+        // 1、通过kafka connect中的schema构建预期的kudu table schema
         HashMap<String, Type> keyColumnSchemaTypes = new HashMap<>();
-        HashMap<String, Type> valueColumnSchemaTypes = new HashMap<>();
         keySchema
                 .fields()
                 .forEach(
@@ -193,45 +197,24 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                         field.name(),
                                         getDialectSchemaType(
                                                 field.schema().type(), field.schema().name())));
-        valueSchema
-                .fields()
-                .forEach(
-                        field ->
-                                valueColumnSchemaTypes.put(
-                                        field.name(),
-                                        getDialectSchemaType(
-                                                field.schema().type(), field.schema().name())));
 
-        // 获取真实的 kudu table schema
-        KuduTable kuduTable = getTable(tableName);
+        // 2、获取真实的 kudu table schema
         List<ColumnSchema> primaryKeyColumnSchemas = kuduTable.getSchema().getPrimaryKeyColumns();
-        List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
 
-        // 把真实的kudu table Column schema组装成Map<columnName, Type> 形式，方便对比
+        // 3、把真实的kudu table Column schema组装成Map<columnName, Type> 形式，方便对比
         HashMap<String, Type> kuduTableKeyColumnTypes = new HashMap<>();
         primaryKeyColumnSchemas.forEach(
                 columnSchema ->
                         kuduTableKeyColumnTypes.put(
                                 columnSchema.getName(), columnSchema.getType()));
 
-        HashMap<String, Type> kuduTableColumnTypes = new HashMap<>();
-        columnSchemas.forEach(
-                columnSchema ->
-                        kuduTableColumnTypes.put(columnSchema.getName(), columnSchema.getType()));
-
-        // 对比预期的kudu table schema和真实的 kudu table schema
+        // 4、对比预期的kudu table schema和真实的 kudu table schema
         HashSet<String> tempKeyColumnName = new HashSet<>();
         tempKeyColumnName.addAll(keyColumnSchemaTypes.keySet());
         tempKeyColumnName.addAll(kuduTableKeyColumnTypes.keySet());
 
-        HashSet<String> tempValueColumnName = new HashSet<>();
-        tempValueColumnName.addAll(valueColumnSchemaTypes.keySet());
-        tempValueColumnName.addAll(kuduTableColumnTypes.keySet());
-
-        // 找出发生变更的field，Type使用sinkRecord的schema转换来的Type
+        // 5、找出发生变更的field，Type使用sinkRecord的schema转换来的Type
         // 如果是sinkRecord中的field被删除了，则Type==null，alter的时候做drop处理
-        Map<String, Type> changeKeyColumnSchemaTypes = new HashMap<>();
-        Map<String, Type> changeValueColumnSchemaTypes = new HashMap<>();
         for (String columnName : tempKeyColumnName) {
             Type recordType = keyColumnSchemaTypes.get(columnName);
             if (recordType == null) {
@@ -241,19 +224,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             }
         }
 
-        for (String columnName : tempValueColumnName) {
-            Type recordType = valueColumnSchemaTypes.get(columnName);
-            if (recordType == null) {
-                changeValueColumnSchemaTypes.put(columnName, null);
-            } else if (!recordType.equals(kuduTableColumnTypes.get(columnName))) {
-                changeValueColumnSchemaTypes.put(
-                        columnName, valueColumnSchemaTypes.get(columnName));
-            }
-        }
-
-        // 构建变更实体
-        AlterTableOptions alterTableOptions = new AlterTableOptions();
-
+        // 6、构建AlterTableOptions
         changeKeyColumnSchemaTypes.forEach(
                 (columnName, type) -> {
                     if (type == null) {
@@ -272,25 +243,67 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                     }
                 });
 
-        changeValueColumnSchemaTypes.forEach(
-                (columnName, type) -> {
-                    if (type == null) {
-                        alterTableOptions.dropColumn(columnName);
-                    } else {
-                        Field field = valueSchema.field(columnName);
-                        Map<String, String> schemaParameters = field.schema().parameters();
-                        ColumnSchema columnSchema =
-                                getColumnSchema(
-                                        field.name(),
-                                        field.schema().name(),
-                                        field.schema().type(),
-                                        schemaParameters,
-                                        false);
-                        alterTableOptions.addColumn(columnSchema);
-                    }
-                });
+        if (valueSchema != null) {
 
-        // 向kudu发起alterTable
+            // 1、通过kafka connect中的schema构建预期的kudu table schema
+            HashMap<String, Type> valueColumnSchemaTypes = new HashMap<>();
+            valueSchema
+                    .fields()
+                    .forEach(
+                            field ->
+                                    valueColumnSchemaTypes.put(
+                                            field.name(),
+                                            getDialectSchemaType(
+                                                    field.schema().type(), field.schema().name())));
+
+            // 2、获取真实的 kudu table schema
+            List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
+
+            // 3、把真实的kudu table Column schema组装成Map<columnName, Type> 形式，方便对比
+            HashMap<String, Type> kuduTableColumnTypes = new HashMap<>();
+            columnSchemas.forEach(
+                    columnSchema ->
+                            kuduTableColumnTypes.put(
+                                    columnSchema.getName(), columnSchema.getType()));
+
+            // 4、对比预期的kudu table schema和真实的 kudu table schema
+            HashSet<String> tempValueColumnName = new HashSet<>();
+            tempValueColumnName.addAll(valueColumnSchemaTypes.keySet());
+            tempValueColumnName.addAll(kuduTableColumnTypes.keySet());
+
+            // 5、找出发生变更的field，Type使用sinkRecord的schema转换来的Type
+            // 如果是sinkRecord中的field被删除了，则Type==null，alter的时候做drop处理
+            for (String columnName : tempValueColumnName) {
+                Type recordType = valueColumnSchemaTypes.get(columnName);
+                if (recordType == null) {
+                    changeValueColumnSchemaTypes.put(columnName, null);
+                } else if (!recordType.equals(kuduTableColumnTypes.get(columnName))) {
+                    changeValueColumnSchemaTypes.put(
+                            columnName, valueColumnSchemaTypes.get(columnName));
+                }
+            }
+
+            // 6、构建AlterTableOptions
+            changeValueColumnSchemaTypes.forEach(
+                    (columnName, type) -> {
+                        if (type == null) {
+                            alterTableOptions.dropColumn(columnName);
+                        } else {
+                            Field field = valueSchema.field(columnName);
+                            Map<String, String> schemaParameters = field.schema().parameters();
+                            ColumnSchema columnSchema =
+                                    getColumnSchema(
+                                            field.name(),
+                                            field.schema().name(),
+                                            field.schema().type(),
+                                            schemaParameters,
+                                            false);
+                            alterTableOptions.addColumn(columnSchema);
+                        }
+                    });
+        }
+
+        // 7、向kudu发起alterTable
         try {
             getKuduClient().alterTable(tableName, alterTableOptions);
             boolean alterTableDone = getKuduClient().isAlterTableDone(tableName);
@@ -305,13 +318,13 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                     "alter table exception,tableName:"
                             + tableName
                             + ";alterKeyColumn:"
-                            + JSON.toJSONString(changeKeyColumnSchemaTypes)
+                            + changeKeyColumnSchemaTypes.toString()
                             + ";alterColumn:"
-                            + JSON.toJSONString(changeValueColumnSchemaTypes)
+                            + changeValueColumnSchemaTypes.toString()
                             + ";keySchema:"
-                            + JSON.toJSONString(keySchema)
+                            + schema2String(keySchema)
                             + ";valueSchema:"
-                            + JSON.toJSONString(valueSchema),
+                            + schema2String(valueSchema),
                     e);
         }
     }
@@ -337,12 +350,29 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
 
         // 3、build columnSchemas
         List<ColumnSchema> columnSchemas = new ArrayList<>();
-        for (Field field : valueSchema.fields()) {
+        if (valueSchema == null) {
+            for (Field field : keySchema.fields()) {
+                String fieldName = field.name();
+                Map<String, String> schemaParameters = field.schema().parameters();
 
-            String fieldName = field.name();
-            Map<String, String> schemaParameters = field.schema().parameters();
-            boolean isKey = keyNames.contains(fieldName);
-            try {
+                ColumnSchema columnSchema =
+                        getColumnSchema(
+                                fieldName,
+                                field.schema().name(),
+                                field.schema().type(),
+                                schemaParameters,
+                                true);
+
+                columnSchemas.add(columnSchema);
+            }
+        } else {
+
+            for (Field field : valueSchema.fields()) {
+
+                String fieldName = field.name();
+                Map<String, String> schemaParameters = field.schema().parameters();
+                boolean isKey = keyNames.contains(fieldName);
+
                 ColumnSchema columnSchema =
                         getColumnSchema(
                                 fieldName,
@@ -352,23 +382,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 isKey);
 
                 columnSchemas.add(columnSchema);
-            } catch (Exception e) {
-                throw new DbDdlException(
-                        "alter table exception,tableName:"
-                                + tableName
-                                + ";fieldName:"
-                                + JSON.toJSONString(fieldName)
-                                + ";fieldSchemaName:"
-                                + JSON.toJSONString(field.schema().name())
-                                + ";fieldSchemaType:"
-                                + JSON.toJSONString(field.schema().type())
-                                + ";keySchema:"
-                                + JSON.toJSONString(keySchema)
-                                + ";valueSchema:"
-                                + JSON.toJSONString(valueSchema));
             }
         }
-
         // 4、build table Schema
         org.apache.kudu.Schema tableSchema = new org.apache.kudu.Schema(columnSchemas);
 
@@ -385,12 +400,12 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             }
         } catch (KuduException e) {
             throw new DbDdlException(
-                    "alter table exception,tableName:"
+                    "create table exception,tableName:"
                             + tableName
                             + ";keySchema:"
-                            + JSON.toJSONString(keySchema)
+                            + schema2String(keySchema)
                             + ";valueSchema:"
-                            + JSON.toJSONString(valueSchema),
+                            + schema2String(valueSchema),
                     e);
         }
     }
@@ -402,54 +417,71 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             Map<String, String> schemaParameters,
             boolean isKey) {
 
-        ColumnSchema.ColumnSchemaBuilder columnSchemaBuilder;
+        ColumnSchema.ColumnSchemaBuilder columnSchemaBuilder = null;
 
-        Type kuduSchemaType = getDialectSchemaType(fieldSchemaType, fieldSchemaName);
-        if (kuduSchemaType != null) {
-            columnSchemaBuilder = new ColumnSchema.ColumnSchemaBuilder(fieldName, kuduSchemaType);
-            if (isKey) {
-                columnSchemaBuilder.key(true);
+        try {
+
+            Type kuduSchemaType = getDialectSchemaType(fieldSchemaType, fieldSchemaName);
+            if (kuduSchemaType != null) {
+                columnSchemaBuilder =
+                        new ColumnSchema.ColumnSchemaBuilder(fieldName, kuduSchemaType);
+                if (isKey) {
+                    columnSchemaBuilder.key(true);
+                } else {
+                    columnSchemaBuilder.nullable(true);
+                }
+
+                // default value 由于默认值类型匹配导致的bug过多，暂时放弃.
+                //            if (defaultValue != null) {
+                //                columnSchemaBuilder.defaultValue(defaultValue);
+                //            }
+
+                // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
+                if (kuduSchemaType.equals(Type.DECIMAL)) {
+
+                    int precision = 20;
+                    int scale = 4;
+
+                    if (schemaParameters != null) {
+                        String precisionString = schemaParameters.get("connect.decimal.precision");
+                        String scaleString = schemaParameters.get("scale");
+
+                        if (precisionString != null) {
+                            try {
+                                precision = Integer.parseInt(precisionString);
+                            } catch (Exception e) {
+                                log.error(
+                                        "fieldName:{},处理decimal字段类型的时候，precision获取错误。precisionString:{}",
+                                        fieldName,
+                                        precisionString);
+                            }
+                        }
+                        if (scaleString != null) {
+                            try {
+                                scale = Integer.parseInt(scaleString);
+                            } catch (Exception e) {
+                                log.error(
+                                        "fieldName:{},处理decimal字段类型的时候，scale获取错误。scaleString:{}",
+                                        fieldName,
+                                        scaleString);
+                            }
+                        }
+                    }
+                    ColumnTypeAttributes columnTypeAttributes =
+                            DecimalUtil.typeAttributes(precision, scale);
+                    columnSchemaBuilder.typeAttributes(columnTypeAttributes);
+                }
             } else {
-                columnSchemaBuilder.nullable(true);
+                throw new DbDdlException("schema type not match.");
             }
-
-            // default value 由于默认值类型匹配导致的bug过多，暂时放弃.
-            //            if (defaultValue != null) {
-            //                columnSchemaBuilder.defaultValue(defaultValue);
-            //            }
-
-            // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
-            if (kuduSchemaType.equals(Type.DECIMAL)) {
-                String precisionString = schemaParameters.get("connect.decimal.precision");
-                String scaleString = schemaParameters.get("scale");
-                int precision = 20;
-                int scale = 4;
-                if (precisionString != null) {
-                    try {
-                        precision = Integer.parseInt(precisionString);
-                    } catch (Exception e) {
-                        log.error(
-                                "fieldName:{},处理decimal字段类型的时候，precision获取错误。precisionString:{}",
-                                fieldName,
-                                precisionString);
-                    }
-                }
-                if (scaleString != null) {
-                    try {
-                        scale = Integer.parseInt(scaleString);
-                    } catch (Exception e) {
-                        log.error(
-                                "fieldName:{},处理decimal字段类型的时候，scale获取错误。scaleString:{}",
-                                fieldName,
-                                scaleString);
-                    }
-                }
-                ColumnTypeAttributes columnTypeAttributes =
-                        DecimalUtil.typeAttributes(precision, scale);
-                columnSchemaBuilder.typeAttributes(columnTypeAttributes);
-            }
-        } else {
-            throw new DbDdlException("schema type not match.");
+        } catch (Throwable e) {
+            log.error(
+                    "kudu sink getColumnSchema exception.fieldName:{},fieldSchemaName:{},fieldSchemaType:{},schemaParameters:{}",
+                    fieldName,
+                    fieldSchemaName,
+                    fieldSchemaType,
+                    schemaParameters);
+            throw new DbDdlException("schema type not match.", e);
         }
         return columnSchemaBuilder.build();
     }
@@ -516,7 +548,6 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             try {
                 addRowValues(tableName, row, field, valueStruct);
             } catch (Exception e) {
-                String sinkRecordJson = JSON.toJSONString(valueStruct);
                 throw new DbDmlException(
                         "addRowValues error:{tableName:"
                                 + tableName
@@ -526,8 +557,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 + field.schema().name()
                                 + ",fieldSchemaType:"
                                 + field.schema().type()
-                                + ",sinkRecordJson:"
-                                + sinkRecordJson
+                                + ",sinkRecord:"
+                                + sinkRecord.toString()
                                 + "}",
                         e);
             }
@@ -562,8 +593,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 + field.schema().name()
                                 + ",fieldSchemaType:"
                                 + field.schema().type()
-                                + ",sinkRecordJson:"
-                                + JSON.toJSONString(keyStruct)
+                                + ",sinkRecord:"
+                                + sinkRecord.toString()
                                 + "}",
                         e);
             }
@@ -744,8 +775,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 + columnSchemaName
                                 + ",columnType"
                                 + columnType
-                                + ",valueStructJson:"
-                                + JSON.toJSONString(valueStruct));
+                                + ",valueStruct:"
+                                + valueStruct.toString());
         }
     }
 }

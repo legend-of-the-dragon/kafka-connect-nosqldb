@@ -36,7 +36,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
     private static final String MESSAGE_EXTRACT_DOC =
             "kafka中存储的数据行的数据结构，值的选项为\"SCHEMA_REGISTRY\"、\"DEBEZIUM\"";
     public static final String BATCH_SIZE_KEY = "batch.size";
-    public static final Integer BATCH_SIZE_DEFAULT = 10000;
+    public static final Integer BATCH_SIZE_DEFAULT = 1000;
     private static final String BATCH_SIZE_DOC =
             "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 

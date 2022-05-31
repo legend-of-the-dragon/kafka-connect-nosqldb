@@ -6,6 +6,7 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 import org.datacenter.kafka.config.AbstractConnectorConfig;
 import org.datacenter.kafka.config.TopicNaming;
+import org.datacenter.kafka.util.SinkRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
 
 /**
  * @author sky
@@ -73,6 +76,11 @@ public abstract class AbstractSinkTask extends SinkTask {
                         apply = dialect.applyUpsertRecord(tableName, sinkRecord);
                     }
                 } catch (Exception e) {
+                    log.error(
+                            "{} sinkTask apply exception.schemaPair:{}.sinkRecord:{}",
+                            getDialectName(),
+                            schemaPair,
+                            sinkRecord.toString());
                     throw new DbDmlException(getDialectName() + " sinkTask apply exception.", e);
                 }
 
@@ -81,9 +89,10 @@ public abstract class AbstractSinkTask extends SinkTask {
                     if (writeCount >= sinkConfig.batchSize) {
                         flushAll();
                         writeCount = 0;
+                        log.info("{} sink flush {} records. ", getDialectName(), writeCount);
                     }
                 } else {
-                    throw new DbDmlException(getDialectName() + " apply sinkRecod exception.");
+                    throw new DbDmlException(getDialectName() + " flushAll sinkRecod exception.");
                 }
             }
             flushAll();
@@ -111,8 +120,12 @@ public abstract class AbstractSinkTask extends SinkTask {
             if (oldValueSchema != null) {
                 newValueSchema = oldValueSchema;
             } else {
-                // TODO 这种情况属于初始化的时候，但是第一条记录是删除，怎么办？
-                log.error("这种情况属于初始化的时候，但是第一条记录是删除，怎么办？{}", getDialectName());
+                log.error(
+                        "{} sink,这种情况属于初始化的时候，但是第一条记录是删除.{},keySchema:{},valueSchema:{}",
+                        getDialectName(),
+                        sinkRecord.toString(),
+                        SinkRecordUtil.schema2String(sinkRecord.keySchema()),
+                        SinkRecordUtil.schema2String(sinkRecord.valueSchema()));
             }
         } else {
             newValueSchema = sinkRecord.valueSchema();
@@ -128,13 +141,31 @@ public abstract class AbstractSinkTask extends SinkTask {
 
                 flushAll();
 
-                dialect.alterTable(tableName, newKeySchema, newValueSchema);
+                try {
+                    dialect.alterTable(tableName, newKeySchema, newValueSchema);
+                } catch (Throwable e) {
+                    log.error(
+                            "{} sink alterTable error:{}",
+                            getDialectName(),
+                            sinkRecord.toString(),
+                            e);
+                    throw new DbDdlException(e);
+                }
             }
         } else {
 
             flushAll();
-
-            dialect.createTable(tableName, newKeySchema, newValueSchema);
+            try {
+                dialect.createTable(tableName, newKeySchema, newValueSchema);
+            } catch (Throwable e) {
+                log.error(
+                        "{} sink createTable error.keySchema:{},valueSchema:{}",
+                        getDialectName(),
+                        schema2String(sinkRecord.keySchema()),
+                        schema2String(sinkRecord.valueSchema()),
+                        e);
+                throw new DbDdlException(e);
+            }
         }
 
         Pair<Schema, Schema> schemaPair = Pair.of(newKeySchema, newValueSchema);

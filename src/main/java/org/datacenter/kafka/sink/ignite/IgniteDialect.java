@@ -1,6 +1,5 @@
 package org.datacenter.kafka.sink.ignite;
 
-import com.alibaba.fastjson.JSON;
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.binary.BinaryObject;
@@ -273,8 +272,8 @@ public class IgniteDialect
                                 + columnSchemaName
                                 + ",columnType"
                                 + columnType
-                                + ",valueStructJson:"
-                                + JSON.toJSONString(valueStruct));
+                                + ",valueStruct:"
+                                + valueStruct.toString());
         }
 
         return null;
