@@ -15,7 +15,6 @@ import org.datacenter.kafka.sink.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,8 +97,7 @@ public class IgniteDialect
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.value(), sinkConfig.messageExtract);
 
-        BinaryObject keyBinaryObject =
-                createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
+        BinaryObject keyBinaryObject = createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
 
         BinaryObject valueBinaryObject =
                 createIgniteBinaryObject(valueStruct, tableName + VALUE_SUFFIX);
@@ -118,8 +116,7 @@ public class IgniteDialect
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.key(), sinkConfig.messageExtract);
 
-        BinaryObject keyBinaryObject =
-                createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
+        BinaryObject keyBinaryObject = createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
 
         dataStreamer.removeData(keyBinaryObject);
 
@@ -135,9 +132,7 @@ public class IgniteDialect
                 .forEach(
                         (field) -> {
                             Object fieldValue = this.getFieldValue(typeName, field, struct);
-                            if (fieldValue != null) {
-                                binaryObjectBuilder.setField(field.name(), fieldValue);
-                            }
+                            binaryObjectBuilder.setField(field.name(), fieldValue);
                         });
 
         try {
@@ -159,109 +154,44 @@ public class IgniteDialect
 
         switch (columnSchemaTypeEnum) {
             case BOOLEAN:
-                Boolean booleanValue =
-                        SinkRecordTypeTransform.getBoolean(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (booleanValue != null) {
-                    return booleanValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getBoolean(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case TINYINT:
-                Byte tinyintValue =
-                        SinkRecordTypeTransform.getTinyint(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (tinyintValue != null) {
-                    return tinyintValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getTinyint(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case SHORT:
-                Short shortValue =
-                        SinkRecordTypeTransform.getShort(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (shortValue != null) {
-                    return shortValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getShort(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case INT:
-                Integer intValue =
-                        SinkRecordTypeTransform.getInt(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (intValue != null) {
-                    return intValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getInt(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case LONG:
-                Long longValue =
-                        SinkRecordTypeTransform.getLong(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (longValue != null) {
-                    return longValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getLong(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case FLOAT:
-                Float floatValue =
-                        SinkRecordTypeTransform.getFloat(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (floatValue != null) {
-                    return floatValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getFloat(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case DOUBLE:
-                Double doubleValue =
-                        SinkRecordTypeTransform.getDouble(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (doubleValue != null) {
-                    return doubleValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getDouble(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case STRING:
-                String stringValue =
-                        SinkRecordTypeTransform.getString(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (stringValue != null) {
-                    return stringValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getString(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case BYTES:
-                byte[] bytesValue =
-                        SinkRecordTypeTransform.getBytes(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (bytesValue != null) {
-                    return bytesValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getBytes(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case TIME:
-                java.sql.Time timeValue =
-                        SinkRecordTypeTransform.getTime(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (timeValue != null) {
-                    return timeValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getTime(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case DATE:
-                java.sql.Date dateValue =
-                        SinkRecordTypeTransform.getDate(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (dateValue != null) {
-                    return dateValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getDate(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case TIMESTAMP:
-                java.sql.Timestamp timestampValue =
-                        SinkRecordTypeTransform.getTimestamp(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (timestampValue != null) {
-                    return timestampValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getTimestamp(
+                        columnName, columnSchemaName, columnType, valueStruct);
             case DECIMAL:
-                BigDecimal decimalValue =
-                        SinkRecordTypeTransform.getDecimal(
-                                columnName, columnSchemaName, columnType, valueStruct);
-                if (decimalValue != null) {
-                    return decimalValue;
-                }
-                break;
+                return SinkRecordTypeTransform.getDecimal(
+                        columnName, columnSchemaName, columnType, valueStruct);
             default:
                 throw new DbDmlException(
                         "not match column type.tableName:"
@@ -275,8 +205,6 @@ public class IgniteDialect
                                 + ",valueStruct:"
                                 + valueStruct.toString());
         }
-
-        return null;
     }
 
     @Override

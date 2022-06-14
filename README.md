@@ -47,12 +47,61 @@
 | kudu.masters              |  是   | 无默认值 | kafka master ip，多个master可以用","隔开     |
 | default.partition.buckets |  否   | 5    | 自动创建kudu表的时候，主键的HashPartitions 设置的数值 |
 
-## 公共数据类型与kafka connect的对照关系
+## 公共数据类型与kafka connect的对照关系 (注意:不在表中的数据类型暂不支持)
+| nosqldb-kafka-connect 数据类型 | kafka connect数据类型 |kafka connect 类型名称| debezium 数据类型 | mysql 数据类型 |
+|---------------------------|------|------|-------|------|
+| TINYINT | INT8  | null |
+| SHORT | INT16  | null |
+| INT | INT32  | null |
+| LONG | INT64  | null |
+| FLOAT | FLOAT32  | null |
+| DOUBLE | FLOAT64  | null | 
+| BOOLEAN | BOOLEAN  | null | 
+| STRING | STRING  | null | 
+| DECIMAL | BYTES  | org.apache.kafka.connect.data.Decimal |
+| DATE | INT32  | org.apache.kafka.connect.data.Date / io.debezium.time.Date |
+| TIMESTAMP | STRING  | io.debezium.time.ZonedTimestamp |
+| TIMESTAMP | INT64  | io.debezium.time.Timestamp / org.apache.kafka.connect.data.Timestamp |
+| TIMESTAMP | INT64  | io.debezium.time.MicroTimestamp
+| TIME | INT32  | io.debezium.time.MicroTime |
+| INT | INT32  | io.debezium.time.Year |
+| BYTES | BYTES  | io.debezium.data.Bits |
+| STRING | STRING  | io.debezium.data.EnumSet |
+| STRING | STRING  | io.debezium.data.Json |
+| BYTES | BYTES  | io.debezium.data.Bits |
 
-## ignite和公共数据类型的对照关系
-
+## ignite和公共数据类型的对照关系 (注意:不在表中的数据类型暂不支持)
+| nosqldb-kafka-connect 数据类型 | ignite 数据类型 | 
+|---------------------------|------|
+| TINYINT | TINYINT  |
+| SHORT | SHORT  | 
+| INT | INT  | 
+| LONG | LONG  | 
+| FLOAT | FLOAT  | 
+| DOUBLE | DOUBLE  | 
+| BOOLEAN | BOOLEAN  | 
+| STRING | STRING  | 
+| BYTES | BYTES  | 
+|TIMESTAMP| TIMESTAMP|
+|DATE|DATE|
+|TIME|TIME|
+|DECIMAL|DECIMAL|
 ## kudu和公共数据类型的对照关系
-
+| nosqldb-kafka-connect 数据类型 | kudu 数据类型 | 
+|---------------------------|------|
+| TINYINT | INT8  |
+| SHORT | INT16  | 
+| INT | INT32  | 
+| LONG | INT64  | 
+| FLOAT | FLOAT  | 
+| DOUBLE | DOUBLE  | 
+| BOOLEAN | BOOL  | 
+| STRING | STRING  | 
+| BYTES | BINARY  | 
+|TIMESTAMP| UNIXTIME_MICROS|
+|DATE|STRING|
+|TIME|STRING|
+|DECIMAL|DECIMAL|
 # Development
 
 You can build kafka-connect-nosqldb with Maven using the standard lifecycle phases.

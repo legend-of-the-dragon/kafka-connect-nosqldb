@@ -108,7 +108,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Boolean) null;
         } else {
             return (Boolean) value;
         }
@@ -122,7 +122,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Byte)null;
         } else {
             return (Byte) value;
         }
@@ -136,7 +136,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Short)null;
         } else {
             return (Short) value;
         }
@@ -150,7 +150,7 @@ public class SinkRecordTypeTransform {
 
         Object val = valueStruct.get(columnName);
         if (val == null) {
-            return null;
+            return (Integer)null;
         } else {
             return (Integer) val;
         }
@@ -164,7 +164,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Long)null;
         } else {
             return (Long) value;
         }
@@ -178,7 +178,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Float)null;
         } else {
             return (Float) value;
         }
@@ -192,7 +192,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Double)null;
         } else {
             return (Double) value;
         }
@@ -219,7 +219,7 @@ public class SinkRecordTypeTransform {
 
                 return (byte[]) value;
             } else {
-                return null;
+                return (byte[])null;
             }
         }
     }
@@ -231,7 +231,7 @@ public class SinkRecordTypeTransform {
             final Struct valueStruct) {
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (String)null;
         } else {
             return (String) value;
         }
@@ -245,7 +245,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (java.sql.Time)null;
         } else {
             Instant timeInstant =
                     ((java.util.Date) value)
@@ -275,7 +275,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (java.sql.Date)null;
         } else {
             java.util.Date dateValue = (java.util.Date) value;
             Instant plus = dateValue.toInstant().atZone(ZONE_ID).toInstant();
@@ -291,7 +291,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (Timestamp)null;
         } else {
 
             if (columnType.equals(Schema.Type.INT64)
@@ -325,7 +325,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return null;
+            return (BigDecimal)null;
         } else {
             return (BigDecimal) value;
         }
