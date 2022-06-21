@@ -40,9 +40,22 @@ public class AbstractConnectorConfig extends AbstractConfig {
     private static final String BATCH_SIZE_DOC =
             "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 
+    public static final String RATE_LIMITING_VALUE_KEY = "rate.limiting.value";
+    public static final Integer RATE_LIMITING_VALUE_DEFAULT = -1;
+    private static final String RATE_LIMITING_VALUE_DOC = "控制写入速度，单位records/s，最小为1，最大-1.默认-1";
+
+    public static final String RATE_LIMITING_TYPE_KEY = "rate.limiting.type";
+    public static final String RATE_LIMITING_TYPE_DEFAULT = "catalog";
+    private static final String RATE_LIMITING_TYPE_DOC =
+            "控制写入速度的控制单位，可选值为：catalog、database、custom-lable";
+
+    public static final String RATE_LIMITING_LABEL_KEY = "rate.limiting.custom-lable";
+    public static final String RATE_LIMITING_LABEL_DEFAULT = null;
+    private static final String RATE_LIMITING_LABEL_DOC = "控制写入速度的自定义标签.无默认值.";
+
     public enum MessageExtract {
         DEBEZIUM,
-        SCHEMA_REGISTRY;
+        SCHEMA_REGISTRY
     }
 
     public static ConfigDef configDef() {

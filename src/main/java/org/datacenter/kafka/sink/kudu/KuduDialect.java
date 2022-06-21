@@ -349,6 +349,12 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         createTableOptions.setRangePartitionColumns(keyNames);
 
         // 3、build columnSchemas
+        // 联合主键是有序的，这就意味着，你的主键在进行代码添加（也就是通过columnSchemas.add()方法）时，
+        // 必须要严格按照你的业务来进行，比如你不能把action_time放在非主键app_name之后，否则会报异常
+        // ```
+        // org.apache.kudu.client.NonRecoverableException: Got out-of-order key column: name:
+        // “action_time” type: INT64 is_key: true is_nullable: false cfile_block_size: 0
+        // ```
         List<ColumnSchema> columnSchemas = new ArrayList<>();
         if (valueSchema == null) {
             for (Field field : keySchema.fields()) {
@@ -367,11 +373,9 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             }
         } else {
 
-            for (Field field : valueSchema.fields()) {
-
+            for (Field field : keySchema.fields()) {
                 String fieldName = field.name();
                 Map<String, String> schemaParameters = field.schema().parameters();
-                boolean isKey = keyNames.contains(fieldName);
 
                 ColumnSchema columnSchema =
                         getColumnSchema(
@@ -379,11 +383,30 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 field.schema().name(),
                                 field.schema().type(),
                                 schemaParameters,
-                                isKey);
+                                true);
 
                 columnSchemas.add(columnSchema);
             }
+
+            for (Field field : valueSchema.fields()) {
+
+                String fieldName = field.name();
+                Map<String, String> schemaParameters = field.schema().parameters();
+                boolean isKey = keyNames.contains(fieldName);
+                if (!isKey) {
+                    ColumnSchema columnSchema =
+                            getColumnSchema(
+                                    fieldName,
+                                    field.schema().name(),
+                                    field.schema().type(),
+                                    schemaParameters,
+                                    false);
+
+                    columnSchemas.add(columnSchema);
+                }
+            }
         }
+
         // 4、build table Schema
         org.apache.kudu.Schema tableSchema = new org.apache.kudu.Schema(columnSchemas);
 
@@ -405,7 +428,9 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                             + ";keySchema:"
                             + schema2String(keySchema)
                             + ";valueSchema:"
-                            + schema2String(valueSchema),
+                            + schema2String(valueSchema)
+                            + ";kuduColumnSchemas:"
+                            + columnSchemas.toString(),
                     e);
         }
     }

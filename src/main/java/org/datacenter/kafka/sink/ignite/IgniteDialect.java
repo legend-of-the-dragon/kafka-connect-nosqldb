@@ -61,6 +61,7 @@ public class IgniteDialect
         if (this.sinkConfig.shallProcessUpdates) {
             igniteDataStreamer.allowOverwrite(true);
         }
+        igniteDataStreamer.perNodeParallelOperations(sinkConfig.parallelOps);
 
         return igniteDataStreamer;
     }
