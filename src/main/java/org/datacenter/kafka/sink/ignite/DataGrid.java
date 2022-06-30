@@ -1,10 +1,10 @@
 package org.datacenter.kafka.sink.ignite;
 
-import org.apache.ignite.Ignite;
-import org.apache.ignite.IgniteBinary;
-import org.apache.ignite.IgniteDataStreamer;
-import org.apache.ignite.Ignition;
+import org.apache.ignite.*;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.events.Event;
+import org.apache.ignite.events.EventType;
+import org.apache.ignite.lang.IgnitePredicate;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,18 +81,62 @@ public enum DataGrid implements AutoCloseable {
         return cfg;
     }
 
-    public void init(String cfgPath) {
+    public String getIgniteName() {
+        return this.ignite.name();
+    }
+
+    public synchronized void init(String cfgPath) {
         try {
             this.gridLock.acquire();
             if (this.ignite == null) {
                 IgniteConfiguration cfg =
                         createConfiguration(
                                 cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
+                cfg.setClientMode(true);
+                cfg.setIncludeEventTypes(
+                        EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
                 this.ignite = Ignition.start(cfg);
+                IgnitePredicate<Event> localListener =
+                        event -> {
+                            log.warn("ignite 集群发生故障.");
+                            Ignition.stopAll(true);
+                            DataGrid.SINK.ignite = null;
+                            return true;
+                        };
+                ignite.events()
+                        .localListen(
+                                localListener,
+                                EventType.EVT_NODE_SEGMENTED,
+                                EventType.EVT_CLIENT_NODE_DISCONNECTED);
+            } else {
+
+                IgniteState state = Ignition.state(ignite.name());
+                log.info("ignite sink state:{}", state);
+                if (state != IgniteState.STARTED) {
+                    IgniteConfiguration cfg =
+                            createConfiguration(
+                                    cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
+                    cfg.setClientMode(true);
+                    cfg.setIncludeEventTypes(
+                            EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
+                    this.ignite = Ignition.start(cfg);
+                    IgnitePredicate<Event> localListener =
+                            event -> {
+                                log.warn("ignite 集群发生故障.");
+                                Ignition.stopAll(true);
+                                DataGrid.SINK.ignite = null;
+                                return true;
+                            };
+                    ignite.events()
+                            .localListen(
+                                    localListener,
+                                    EventType.EVT_NODE_SEGMENTED,
+                                    EventType.EVT_CLIENT_NODE_DISCONNECTED);
+                }
             }
 
             this.igniteClientCnt.incrementAndGet();
-            log.info("Connected to " + this.name());
+            log.info("ignite init " + this.name());
         } catch (InterruptedException e) {
             log.error("ignite init exception.", e);
             throw new ConnectException(e);
@@ -115,6 +159,7 @@ public enum DataGrid implements AutoCloseable {
                 log.info("Disconnected from " + this.name());
             }
         } catch (InterruptedException var5) {
+
         } finally {
             this.gridLock.release();
         }

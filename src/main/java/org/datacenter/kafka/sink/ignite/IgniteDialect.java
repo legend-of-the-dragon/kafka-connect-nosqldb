@@ -2,6 +2,8 @@ package org.datacenter.kafka.sink.ignite;
 
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteDataStreamer;
+import org.apache.ignite.IgniteState;
+import org.apache.ignite.Ignition;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.binary.BinaryObjectException;
@@ -54,6 +56,12 @@ public class IgniteDialect
     }
 
     private IgniteDataStreamer<Object, Object> getDataStreamer(String cacheName) {
+
+        IgniteState state = Ignition.state(DataGrid.SINK.getIgniteName());
+        log.info("ignite sink state:{}", state);
+        if (state != IgniteState.STARTED) {
+            DataGrid.SINK.init(sinkConfig.igniteCfg());
+        }
 
         DataGrid.SINK.ensureCache(cacheName);
         IgniteDataStreamer<Object, Object> igniteDataStreamer =

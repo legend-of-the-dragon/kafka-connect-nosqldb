@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
@@ -122,7 +123,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Byte)null;
+            return (Byte) null;
         } else {
             return (Byte) value;
         }
@@ -136,7 +137,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Short)null;
+            return (Short) null;
         } else {
             return (Short) value;
         }
@@ -150,7 +151,7 @@ public class SinkRecordTypeTransform {
 
         Object val = valueStruct.get(columnName);
         if (val == null) {
-            return (Integer)null;
+            return (Integer) null;
         } else {
             return (Integer) val;
         }
@@ -164,7 +165,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Long)null;
+            return (Long) null;
         } else {
             return (Long) value;
         }
@@ -178,7 +179,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Float)null;
+            return (Float) null;
         } else {
             return (Float) value;
         }
@@ -192,7 +193,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Double)null;
+            return (Double) null;
         } else {
             return (Double) value;
         }
@@ -219,7 +220,7 @@ public class SinkRecordTypeTransform {
 
                 return (byte[]) value;
             } else {
-                return (byte[])null;
+                return (byte[]) null;
             }
         }
     }
@@ -231,7 +232,7 @@ public class SinkRecordTypeTransform {
             final Struct valueStruct) {
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (String)null;
+            return (String) null;
         } else {
             return (String) value;
         }
@@ -245,16 +246,23 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (java.sql.Time)null;
+            return (java.sql.Time) null;
         } else {
-            Instant timeInstant =
-                    ((java.util.Date) value)
-                            .toInstant()
-                            .plus(-8, ChronoUnit.HOURS)
-                            .atZone(ZONE_ID)
-                            .toInstant();
 
-            return new java.sql.Time(timeInstant.toEpochMilli());
+            if (value instanceof Long) {
+                return new java.sql.Time((Long) value);
+            } else if (value instanceof java.util.Date) {
+                Instant timeInstant =
+                        ((java.util.Date) value)
+                                .toInstant()
+                                .plus(-8, ChronoUnit.HOURS)
+                                .atZone(ZONE_ID)
+                                .toInstant();
+
+                return new java.sql.Time(timeInstant.toEpochMilli());
+            } else {
+                return null;
+            }
         }
     }
 
@@ -275,11 +283,16 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (java.sql.Date)null;
-        } else {
+            return (Date) null;
+        } else if (value instanceof Integer) {
+            LocalDate localDate = LocalDate.ofEpochDay((Integer) value);
+            return Date.valueOf(localDate);
+        } else if (value instanceof java.util.Date) {
             java.util.Date dateValue = (java.util.Date) value;
             Instant plus = dateValue.toInstant().atZone(ZONE_ID).toInstant();
             return new java.sql.Date(plus.toEpochMilli());
+        } else {
+            return null;
         }
     }
 
@@ -291,14 +304,14 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (Timestamp)null;
+            return (Timestamp) null;
         } else {
 
             if (columnType.equals(Schema.Type.INT64)
                     && (columnSchemaName.equals(SchemaTypeEnum.CONNECT_TIMESTAMP)
                             || columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_TIMESTAMP))) {
 
-                return new Timestamp(((java.util.Date) value).getTime());
+                return new Timestamp((Long) value);
             } else if (columnType.equals(Schema.Type.STRING)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_ZONED_TIMESTAMP)) {
                 return new Timestamp(
@@ -325,7 +338,7 @@ public class SinkRecordTypeTransform {
 
         Object value = valueStruct.get(columnName);
         if (value == null) {
-            return (BigDecimal)null;
+            return (BigDecimal) null;
         } else {
             return (BigDecimal) value;
         }
