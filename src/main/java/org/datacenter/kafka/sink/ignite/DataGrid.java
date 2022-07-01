@@ -89,49 +89,31 @@ public enum DataGrid implements AutoCloseable {
         try {
             this.gridLock.acquire();
             if (this.ignite == null) {
-                IgniteConfiguration cfg =
-                        createConfiguration(
-                                cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
-                cfg.setClientMode(true);
-                cfg.setIncludeEventTypes(
-                        EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
-                this.ignite = Ignition.start(cfg);
-                IgnitePredicate<Event> localListener =
-                        event -> {
-                            log.warn("ignite 集群发生故障.");
-                            Ignition.stopAll(true);
-                            DataGrid.SINK.ignite = null;
-                            return true;
-                        };
-                ignite.events()
-                        .localListen(
-                                localListener,
-                                EventType.EVT_NODE_SEGMENTED,
-                                EventType.EVT_CLIENT_NODE_DISCONNECTED);
+                initIgnite(cfgPath);
             } else {
 
                 IgniteState state = Ignition.state(ignite.name());
                 log.info("ignite sink state:{}", state);
+
                 if (state != IgniteState.STARTED) {
-                    IgniteConfiguration cfg =
-                            createConfiguration(
-                                    cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
-                    cfg.setClientMode(true);
-                    cfg.setIncludeEventTypes(
-                            EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
-                    this.ignite = Ignition.start(cfg);
-                    IgnitePredicate<Event> localListener =
-                            event -> {
-                                log.warn("ignite 集群发生故障.");
-                                Ignition.stopAll(true);
-                                DataGrid.SINK.ignite = null;
-                                return true;
-                            };
-                    ignite.events()
-                            .localListen(
-                                    localListener,
-                                    EventType.EVT_NODE_SEGMENTED,
-                                    EventType.EVT_CLIENT_NODE_DISCONNECTED);
+                    initIgnite(cfgPath);
+                } else {
+                    boolean disconnect = false;
+                    try {
+                        IgniteCache<Object, Object> cache = this.ignite.getOrCreateCache("");
+                        if (!cache.isClosed()) {
+                            cache.close();
+                        } else {
+                            throw new ConnectException("init try connect test cache error.");
+                        }
+                    } catch (Throwable e) {
+                        disconnect = true;
+                        log.warn("init try connect error.", e);
+                    }
+                    if (disconnect) {
+                        log.info("ignite sink client is disconnected,now restart.");
+                        initIgnite(cfgPath);
+                    }
                 }
             }
 
@@ -143,6 +125,29 @@ public enum DataGrid implements AutoCloseable {
         } finally {
             this.gridLock.release();
         }
+    }
+
+    private void initIgnite(String cfgPath) {
+        IgniteConfiguration cfg =
+                createConfiguration(cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
+        cfg.setClientMode(true);
+        cfg.setIncludeEventTypes(
+                EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
+        this.ignite = Ignition.start(cfg);
+        IgnitePredicate<Event> localListener =
+                event -> {
+                    log.warn("ignite 集群发生故障.");
+                    Ignition.stopAll(false);
+                    log.info("ignite sink now state:{}", Ignition.state(ignite.name()));
+                    this.ignite = null;
+                    log.info("ignite sink is null?:{}", this.ignite == null);
+                    return true;
+                };
+        ignite.events()
+                .localListen(
+                        localListener,
+                        EventType.EVT_NODE_SEGMENTED,
+                        EventType.EVT_CLIENT_NODE_DISCONNECTED);
     }
 
     public void close() {
