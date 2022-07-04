@@ -40,6 +40,14 @@ public class AbstractConnectorConfig extends AbstractConfig {
     private static final String BATCH_SIZE_DOC =
             "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 
+    public static final String TIME_ZONED_SOURCE_KEY = "timezoned.source";
+    private static final Integer TIME_ZONED_SOURCE_DEFAULT = 8;
+    private static final String TIME_ZONED_SOURCE_DOC = "源数据库的时区.";
+
+    public static final String TIME_ZONED_TARGET_KEY = "timezoned.target";
+    private static final Integer TIME_ZONED_TARGET_DEFAULT = 8;
+    private static final String TIME_ZONED_TARGET_DOC = "目标数据库的时区.";
+
     public static final String RATE_LIMITING_VALUE_KEY = "rate.limiting.value";
     public static final Integer RATE_LIMITING_VALUE_DEFAULT = -1;
     private static final String RATE_LIMITING_VALUE_DOC = "控制写入速度，单位records/s，最小为1，最大-1.默认-1";
@@ -90,7 +98,19 @@ public class AbstractConnectorConfig extends AbstractConfig {
                         Type.STRING,
                         MESSAGE_EXTRACT_DEFAULT,
                         Importance.LOW,
-                        MESSAGE_EXTRACT_DOC);
+                        MESSAGE_EXTRACT_DOC)
+                .define(
+                        TIME_ZONED_SOURCE_KEY,
+                        Type.INT,
+                        TIME_ZONED_SOURCE_DEFAULT,
+                        Importance.LOW,
+                        TIME_ZONED_SOURCE_DOC)
+                .define(
+                        TIME_ZONED_TARGET_KEY,
+                        Type.INT,
+                        TIME_ZONED_TARGET_DEFAULT,
+                        Importance.LOW,
+                        TIME_ZONED_TARGET_DOC);
     }
 
     public Integer batchSize() {
@@ -118,20 +138,34 @@ public class AbstractConnectorConfig extends AbstractConfig {
         }
     }
 
+    public Integer timeZonedSource() {
+        return this.getInt(TIME_ZONED_SOURCE_KEY);
+    }
+
+    public Integer timeZonedTarget() {
+        return this.getInt(TIME_ZONED_TARGET_KEY);
+    }
+
     public final String topicReplacePrefix;
     public final String table_name_format;
     public final String tableNamePrefix;
     public final int batchSize;
     public final MessageExtract messageExtract;
+    public final int timeZonedSource;
+    public final int timeZonedTarget;
+    public final String connectorName;
 
     public AbstractConnectorConfig(ConfigDef configDef, Map<String, String> props) {
 
         super(configDef, props);
 
+        connectorName = props.get("name");
         this.topicReplacePrefix = topicReplacePrefix();
         this.table_name_format = table_name_format();
         this.tableNamePrefix = tableNamePrefix();
         this.batchSize = batchSize();
         this.messageExtract = messageExtract();
+        this.timeZonedSource = timeZonedSource();
+        this.timeZonedTarget = timeZonedTarget();
     }
 }

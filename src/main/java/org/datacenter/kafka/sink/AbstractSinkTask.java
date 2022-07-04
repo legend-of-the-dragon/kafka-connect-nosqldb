@@ -182,6 +182,7 @@ public abstract class AbstractSinkTask extends SinkTask {
     }
 
     public void stop() {
+        log.info("{} will stop.", this.sinkConfig.connectorName);
         dialect.stop();
     }
 

@@ -38,11 +38,10 @@ public class IgniteDialect
     public final String KEY_SUFFIX = ".Key";
 
     public final String VALUE_SUFFIX = ".Value";
-    private final String DEBEZIUM_TIME_ZONED_TIMESTAMP = "io.debezium.time.ZonedTimestamp";
 
     public IgniteDialect(IgniteSinkConnectorConfig sinkConfig) {
         this.sinkConfig = sinkConfig;
-        DataGrid.SINK.init(this.sinkConfig.igniteCfg());
+        DataGrid.SINK.init(this.sinkConfig.connectorName, this.sinkConfig.igniteCfg());
     }
 
     @Override
@@ -60,7 +59,7 @@ public class IgniteDialect
         IgniteState state = Ignition.state(DataGrid.SINK.getIgniteName());
         log.info("ignite sink state:{}", state);
         if (state != IgniteState.STARTED) {
-            DataGrid.SINK.init(sinkConfig.igniteCfg());
+            DataGrid.SINK.init(this.sinkConfig.connectorName, this.sinkConfig.igniteCfg());
         }
 
         DataGrid.SINK.ensureCache(cacheName);
@@ -240,7 +239,6 @@ public class IgniteDialect
             }
         }
 
-        DataGrid.SINK.close();
         log.info("ignite Sink task stopped.");
     }
 

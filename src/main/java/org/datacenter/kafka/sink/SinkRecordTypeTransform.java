@@ -2,13 +2,16 @@ package org.datacenter.kafka.sink;
 
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
+import org.apache.kafka.connect.errors.ConnectException;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.sql.Date;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
@@ -250,8 +253,14 @@ public class SinkRecordTypeTransform {
         } else {
 
             if (value instanceof Long) {
-                return new java.sql.Time((Long) value);
+                // time.precision.mode=adaptive_time_microseconds
+                // io.debezium.time.MicroTime
+                Long mircroSecondsOfDay = (Long) value;
+                LocalTime localTime = LocalTime.ofNanoOfDay(mircroSecondsOfDay * 1000);
+                return Time.valueOf(localTime);
             } else if (value instanceof java.util.Date) {
+                // time.precision.mode=connect
+                // java.util.Date
                 Instant timeInstant =
                         ((java.util.Date) value)
                                 .toInstant()
@@ -292,7 +301,7 @@ public class SinkRecordTypeTransform {
             Instant plus = dateValue.toInstant().atZone(ZONE_ID).toInstant();
             return new java.sql.Date(plus.toEpochMilli());
         } else {
-            return null;
+            throw new ConnectException("The date type did not match.");
         }
     }
 
@@ -306,19 +315,22 @@ public class SinkRecordTypeTransform {
         if (value == null) {
             return (Timestamp) null;
         } else {
-
             if (columnType.equals(Schema.Type.INT64)
-                    && (columnSchemaName.equals(SchemaTypeEnum.CONNECT_TIMESTAMP)
-                            || columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_TIMESTAMP))) {
+                    && columnSchemaName.equals(SchemaTypeEnum.CONNECT_TIMESTAMP)) {
+
+                return new Timestamp(((java.util.Date) value).getTime());
+            } else if (columnType.equals(Schema.Type.INT64)
+                    && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_TIMESTAMP)) {
 
                 return new Timestamp((Long) value);
             } else if (columnType.equals(Schema.Type.STRING)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_ZONED_TIMESTAMP)) {
+
                 return new Timestamp(
                         Instant.parse((String) value)
-                                .plus(8, ChronoUnit.HOURS)
-                                .atZone(ZONE_ID)
-                                .toInstant()
+//                                .plus(8, ChronoUnit.HOURS)
+//                                .atZone(ZONE_ID)
+//                                .toInstant()
                                 .toEpochMilli());
             } else if (columnType.equals(Schema.Type.INT64)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_MICRO_TIMESTAMP)) {

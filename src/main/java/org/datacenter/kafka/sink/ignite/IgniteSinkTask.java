@@ -1,6 +1,5 @@
 package org.datacenter.kafka.sink.ignite;
 
-import org.datacenter.kafka.config.TopicNaming;
 import org.datacenter.kafka.config.Version;
 import org.datacenter.kafka.config.ignite.IgniteSinkConnectorConfig;
 import org.datacenter.kafka.sink.AbstractSinkTask;
@@ -33,6 +32,6 @@ public final class IgniteSinkTask extends AbstractSinkTask {
 
         this.sinkConfig = new IgniteSinkConnectorConfig(map);
         dialect = new IgniteDialect((IgniteSinkConnectorConfig) sinkConfig);
-        log.info("ignite Sink task started");
+        log.info("ignite Sink task started,connector: {}", sinkConfig.connectorName);
     }
 }
