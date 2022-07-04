@@ -1,6 +1,7 @@
 package org.datacenter.kafka.sink;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
@@ -10,10 +11,7 @@ import org.datacenter.kafka.util.SinkRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
 
@@ -77,10 +75,12 @@ public abstract class AbstractSinkTask extends SinkTask {
                     }
                 } catch (Exception e) {
                     log.error(
-                            "{} sinkTask apply exception.schemaPair:{}.sinkRecord:{}",
+                            "{} sinkTask apply exception.sinkRecordKeySchema:{},sinkRecord.key:{}.sinkRecordValueSchema:{}.sinkRecord.value:{}",
                             getDialectName(),
-                            schemaPair,
-                            sinkRecord.toString());
+                            ConnectSchemaToString(sinkRecord.keySchema()),
+                            sinkRecord.key(),
+                            ConnectSchemaToString(sinkRecord.valueSchema()),
+                            sinkRecord.value());
                     throw new DbDmlException(getDialectName() + " sinkTask apply exception.", e);
                 }
 
@@ -98,6 +98,26 @@ public abstract class AbstractSinkTask extends SinkTask {
             flushAll();
             log.info("{} sink write {} records. ", getDialectName(), recordsCount);
         }
+    }
+
+    private String ConnectSchemaToString(Schema connectSchema) {
+
+        StringBuilder result = new StringBuilder("Schema{");
+        result.append("type:").append(connectSchema.type());
+        if (connectSchema.name() != null) {
+            result.append(",name:").append(connectSchema.name());
+        }
+        List<Field> fields = connectSchema.fields();
+        result.append(",fields:[");
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            result.append("{").append(field).append("}");
+            if (i < fields.size() - 1) {
+                result.append(",");
+            }
+        }
+        result.append("]}");
+        return result.toString();
     }
 
     /**
@@ -182,7 +202,7 @@ public abstract class AbstractSinkTask extends SinkTask {
     }
 
     public void stop() {
-        log.info("{} will stop.", this.sinkConfig.connectorName);
+        log.info("task will stop.");
         dialect.stop();
     }
 

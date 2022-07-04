@@ -32,6 +32,6 @@ public final class IgniteSinkTask extends AbstractSinkTask {
 
         this.sinkConfig = new IgniteSinkConnectorConfig(map);
         dialect = new IgniteDialect((IgniteSinkConnectorConfig) sinkConfig);
-        log.info("ignite Sink task started,connector: {}", sinkConfig.connectorName);
+        log.info("ignite Sink task started");
     }
 }

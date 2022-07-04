@@ -85,24 +85,22 @@ public enum DataGrid implements AutoCloseable {
         return this.ignite.name();
     }
 
-    public synchronized void init(String connectorName, String cfgPath) {
+    public void init(String cfgPath) {
         try {
             this.gridLock.acquire();
             if (this.ignite == null) {
-                log.info("ignite is null.");
-                initIgnite(connectorName, cfgPath);
+                log.info("ignite sink client is null.");
+                initIgnite(cfgPath);
             } else {
 
                 IgniteState state = Ignition.state(ignite.name());
                 log.info(
-                        "ignite sink is ready to initialize,The ignite client current state is:{}",
+                        "ignite sink client is ready to initialize,The ignite client current state is:{}",
                         state);
 
                 if (state != IgniteState.STARTED) {
-                    log.info(
-                            "ignite sink state not is started,try init connector:{} ...",
-                            connectorName);
-                    initIgnite(connectorName, cfgPath);
+                    log.info("ignite sink client state is not started,try init client...");
+                    initIgnite(cfgPath);
                 } else {
                     boolean disconnect = false;
                     try {
@@ -112,33 +110,33 @@ public enum DataGrid implements AutoCloseable {
                             cache.close();
                         } else {
                             disconnect = true;
-                            log.warn("init try connect test cache error.");
+                            log.warn("ignite sink client init,try connect test cache error.");
                         }
                     } catch (Throwable e) {
                         disconnect = true;
-                        log.warn("init try connect error.", e);
+                        log.warn("ignite sink client init,try connect error.", e);
                     }
                     if (disconnect) {
                         log.info("ignite sink client is disconnected,now restart.");
-                        initIgnite(connectorName, cfgPath);
+                        initIgnite(cfgPath);
                     }
                 }
             }
 
             this.igniteClientCnt.incrementAndGet();
-            log.info("ignite init " + this.name());
+            log.info("ignite sink client init " + this.name());
         } catch (InterruptedException e) {
-            log.error("ignite init exception.", e);
+            log.error("ignite sink client init exception.", e);
             throw new ConnectException(e);
         } finally {
             this.gridLock.release();
         }
     }
 
-    private void initIgnite(String connectorName, String cfgPath) {
+    private void initIgnite(String cfgPath) {
 
-        log.info("ignite sink client init connector:{},.....", connectorName);
-        this.close();
+        log.info("ignite sink client init.....");
+        this.closeIgnite();
 
         IgniteConfiguration cfg =
                 createConfiguration(cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
@@ -147,18 +145,20 @@ public enum DataGrid implements AutoCloseable {
         this.ignite = Ignition.start(cfg);
         IgnitePredicate<Event> localListener =
                 event -> {
-                    log.warn("ignite 集群发生故障.");
+                    log.warn("当前ignite client和集群断开连接或者ignite 集群发生故障.");
                     this.close();
-                    log.info("ignite sink now state:{}", Ignition.state(ignite.name()));
+                    log.info("ignite sink client now state:{}", Ignition.state(ignite.name()));
                     this.ignite = null;
-                    log.info("ignite sink is null?:{}", this.ignite == null);
+                    log.info("ignite sink client is null?:{}", this.ignite == null);
                     return true;
                 };
-        ignite.events()
+        this.ignite
+                .events()
                 .localListen(
                         localListener,
                         EventType.EVT_NODE_SEGMENTED,
                         EventType.EVT_CLIENT_NODE_DISCONNECTED);
+        log.info("ignite sink client init success.");
     }
 
     public void close() {
@@ -169,20 +169,22 @@ public enum DataGrid implements AutoCloseable {
                 throw new IllegalStateException("DataGrid is not initialized.");
             }
 
-            if (cnt == 0) {
-                if (this.ignite == null) {
-                    Ignition.stopAll(true);
-                } else {
-                    this.ignite.close();
-                }
-                this.ignite = null;
-                log.info("Disconnected from " + this.name());
-            }
-        } catch (InterruptedException var5) {
-
+            closeIgnite();
+        } catch (InterruptedException e) {
+            log.error("ignite sink client close exception.", e);
         } finally {
             this.gridLock.release();
         }
+    }
+
+    private void closeIgnite() {
+        if (this.ignite == null) {
+            Ignition.stopAll(true);
+        } else {
+            this.ignite.close();
+        }
+        this.ignite = null;
+        log.info("ignite sink client close.");
     }
 
     public <K, V> IgniteDataStreamer<K, V> dataStreamer(String cacheName) {

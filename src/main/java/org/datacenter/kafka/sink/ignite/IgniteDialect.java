@@ -41,7 +41,7 @@ public class IgniteDialect
 
     public IgniteDialect(IgniteSinkConnectorConfig sinkConfig) {
         this.sinkConfig = sinkConfig;
-        DataGrid.SINK.init(this.sinkConfig.connectorName, this.sinkConfig.igniteCfg());
+        DataGrid.SINK.init(this.sinkConfig.igniteCfg());
     }
 
     @Override
@@ -59,7 +59,7 @@ public class IgniteDialect
         IgniteState state = Ignition.state(DataGrid.SINK.getIgniteName());
         log.info("ignite sink state:{}", state);
         if (state != IgniteState.STARTED) {
-            DataGrid.SINK.init(this.sinkConfig.connectorName, this.sinkConfig.igniteCfg());
+            DataGrid.SINK.init(this.sinkConfig.igniteCfg());
         }
 
         DataGrid.SINK.ensureCache(cacheName);
@@ -216,6 +216,21 @@ public class IgniteDialect
     }
 
     @Override
+    public void stop() throws ConnectException {
+
+        for (IgniteDataStreamer<Object, Object> igniteDataStreamer : this.dataStreamers.values()) {
+            try {
+                igniteDataStreamer.flush();
+                igniteDataStreamer.close();
+            } catch (Throwable e) {
+                log.error("igniteStreamer stop exception.", e);
+            }
+        }
+        this.dataStreamers.clear();
+        log.info("ignite Sink task stopped.");
+    }
+
+    @Override
     public void flush() throws DbDmlException {
 
         try {
@@ -226,20 +241,6 @@ public class IgniteDialect
             log.error("ignite sink flush exception.", e);
             throw new ConnectException("ignite sink flush exception.", e);
         }
-    }
-
-    @Override
-    public void stop() throws ConnectException {
-
-        for (IgniteDataStreamer<Object, Object> igniteDataStreamer : this.dataStreamers.values()) {
-            try {
-                igniteDataStreamer.close();
-            } catch (Exception e) {
-                log.error("igniteStreamer close exception.", e);
-            }
-        }
-
-        log.info("ignite Sink task stopped.");
     }
 
     @Override
