@@ -1,5 +1,6 @@
 package org.datacenter.kafka.sink.ignite;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.ignite.IgniteBinary;
 import org.apache.ignite.IgniteDataStreamer;
 import org.apache.ignite.IgniteState;
@@ -69,7 +70,6 @@ public class IgniteDialect
             igniteDataStreamer.allowOverwrite(true);
         }
         igniteDataStreamer.perNodeParallelOperations(sinkConfig.parallelOps);
-
         return igniteDataStreamer;
     }
 
@@ -129,6 +129,11 @@ public class IgniteDialect
         dataStreamer.removeData(keyBinaryObject);
 
         return true;
+    }
+
+    @Override
+    public Pair<Boolean, Long> elasticLimit(String connectorName) {
+        return ElasticLimit.getElasticLimit(connectorName);
     }
 
     private BinaryObject createIgniteBinaryObject(Struct struct, String typeName) {
@@ -218,6 +223,7 @@ public class IgniteDialect
     @Override
     public void stop() throws ConnectException {
 
+        log.info("ignite Sink task ready to stop.");
         for (IgniteDataStreamer<Object, Object> igniteDataStreamer : this.dataStreamers.values()) {
             try {
                 igniteDataStreamer.flush();

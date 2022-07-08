@@ -42,6 +42,19 @@ public abstract class AbstractSinkTask extends SinkTask {
                     getDialectName(),
                     recordsCount);
 
+            Pair<Boolean, Long> elasticLimit = dialect.elasticLimit(sinkConfig.connectorName);
+            Boolean isLimit = elasticLimit.getKey();
+            if (isLimit) {
+                Long limitValue = elasticLimit.getValue();
+                log.info("{}触发限速，限速时长:{}ms", sinkConfig.connectorName, limitValue);
+                try {
+                    Thread.sleep(limitValue);
+                } catch (InterruptedException e) {
+                    log.error("线程暂停异常.", e);
+                }
+                log.info("{}限速结束，限速时长:{}ms", sinkConfig.connectorName, limitValue);
+            }
+
             int writeCount = 0;
 
             for (SinkRecord sinkRecord : records) {

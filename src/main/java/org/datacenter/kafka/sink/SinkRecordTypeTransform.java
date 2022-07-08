@@ -317,25 +317,39 @@ public class SinkRecordTypeTransform {
         } else {
             if (columnType.equals(Schema.Type.INT64)
                     && columnSchemaName.equals(SchemaTypeEnum.CONNECT_TIMESTAMP)) {
-
-                return new Timestamp(((java.util.Date) value).getTime());
+                // time.precision.mode=connect
+                // datatime
+                return new Timestamp(
+                        ((java.util.Date) value)
+                                .toInstant()
+                                .plus(-8, ChronoUnit.HOURS)
+                                .atZone(ZONE_ID)
+                                .toInstant()
+                                .toEpochMilli());
             } else if (columnType.equals(Schema.Type.INT64)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_TIMESTAMP)) {
-
-                return new Timestamp((Long) value);
+                // time.precision.mode=adaptive_time_microseconds
+                // datatime(0-3)
+                return new Timestamp(
+                        Instant.ofEpochMilli((Long) value)
+                                .plus(-8, ChronoUnit.HOURS)
+                                .atZone(ZONE_ID)
+                                .toInstant()
+                                .toEpochMilli());
             } else if (columnType.equals(Schema.Type.STRING)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_ZONED_TIMESTAMP)) {
-
+                // time.precision.mode=connect/adaptive_time_microseconds
+                // timestamp
                 return new Timestamp(
                         Instant.parse((String) value)
-//                                .plus(8, ChronoUnit.HOURS)
-//                                .atZone(ZONE_ID)
-//                                .toInstant()
+                                .atZone(ZONE_ID)
+                                .toInstant()
                                 .toEpochMilli());
             } else if (columnType.equals(Schema.Type.INT64)
                     && columnSchemaName.equals(SchemaTypeEnum.DEBEZIUM_MICRO_TIMESTAMP)) {
-
-                return new Timestamp((Long) value);
+                // time.precision.mode=adaptive_time_microseconds
+                // datatime(4-6)
+                return new Timestamp(((Long) value) / 1000);
             } else {
                 return new Timestamp((Long) value);
             }

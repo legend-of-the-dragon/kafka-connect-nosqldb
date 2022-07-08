@@ -1,5 +1,6 @@
 package org.datacenter.kafka.sink.kudu;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
@@ -628,6 +629,11 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         apply(delete);
 
         return true;
+    }
+
+    @Override
+    public Pair<Boolean, Long> elasticLimit(String connectorName) {
+        return Pair.of(false, 0L);
     }
 
     private void apply(Object operationRecord) throws DbDmlException {

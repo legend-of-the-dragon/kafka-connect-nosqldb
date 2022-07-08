@@ -1,5 +1,6 @@
 package org.datacenter.kafka.sink;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
@@ -28,6 +29,8 @@ public abstract class AbstractDialect<Table, Type> {
     public abstract boolean applyUpsertRecord(String tableName, SinkRecord sinkRecord);
 
     public abstract boolean applyDeleteRecord(String tableName, SinkRecord sinkRecord);
+
+    public abstract Pair<Boolean,Long> elasticLimit(String connectorName);
 
     public abstract void flush() throws DbDmlException;
 

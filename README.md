@@ -6,7 +6,7 @@
 # Documentation
 
 ### 注意事项
-1、debezium写kafka的时候，尽可能一个topic只有一个分区，不然一些莫名其妙的问题都会因为分区出现，尤其是delete导致的问题。
+1. debezium写kafka的时候，尽可能一个topic只有一个分区，不然一些莫名其妙的问题都会因为分区出现，尤其是delete导致的问题。
 2. ignite目前创建表结构的时候千万不能配错，一旦配错非常难定位问题，而且修复的时候删除不只是用sql删除表，还需要通过原生API删除cache。
 3. kudu目前对alter语句支持比较有限，如果出现alter的时候，保险起见，删除kudu中的表，删除kafka中的topic，重新抽一遍当前表。
 

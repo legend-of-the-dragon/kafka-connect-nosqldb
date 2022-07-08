@@ -153,11 +153,13 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public final MessageExtract messageExtract;
     public final int timeZonedSource;
     public final int timeZonedTarget;
+    public final String connectorName;
 
     public AbstractConnectorConfig(ConfigDef configDef, Map<String, String> props) {
 
         super(configDef, props);
 
+        this.connectorName = props.get("name");
         this.topicReplacePrefix = topicReplacePrefix();
         this.table_name_format = table_name_format();
         this.tableNamePrefix = tableNamePrefix();
