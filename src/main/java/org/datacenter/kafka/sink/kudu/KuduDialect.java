@@ -1,5 +1,6 @@
 package org.datacenter.kafka.sink.kudu;
 
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
@@ -38,6 +39,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     private final KuduClient kuduClient;
     private KuduSession kuduSession;
     private final Map<String, KuduTable> kuduTableCache = new HashMap<>();
+    Map<String, MutablePair<HashMap<String, Type>, HashMap<String, Type>>> columnSchemaTypesCache =
+            new HashMap<>();
 
     public KuduDialect(KuduSinkConnectorConfig sinkConfig) {
 
@@ -97,78 +100,6 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         return kuduTable;
     }
 
-    /**
-     * 对比schemaRegister中的schema和DB中的schema的差异<br>
-     * 对比的时候需要把字段的类型转换成dialect的类型来对比，不能用公共类型对比，由方言来处理类型的转换问题。
-     *
-     * @param tableName tableName
-     * @param keySchema keySchama
-     * @param valueSchema valueSchema
-     * @return compare
-     * @throws DbDdlException DbDdlException
-     */
-    @Override
-    public boolean compare(String tableName, Schema keySchema, Schema valueSchema)
-            throws DbDdlException {
-
-        // 1、通过kafka connect中的schema构建预期的kudu table schema
-        HashMap<String, Type> keyColumnSchemaTypes = new HashMap<>();
-        keySchema
-                .fields()
-                .forEach(
-                        field ->
-                                keyColumnSchemaTypes.put(
-                                        field.name(),
-                                        getDialectSchemaType(
-                                                field.schema().type(), field.schema().name())));
-
-        // 2、获取真实的 kudu table schema
-        KuduTable kuduTable = getTable(tableName);
-        List<ColumnSchema> primaryKeyColumnSchemas = kuduTable.getSchema().getPrimaryKeyColumns();
-
-        // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
-        HashMap<String, Type> kuduTableKeyColumnTypes = new HashMap<>();
-        primaryKeyColumnSchemas.forEach(
-                columnSchema ->
-                        kuduTableKeyColumnTypes.put(
-                                columnSchema.getName(), columnSchema.getType()));
-        // 4、对比预期的kudu table schema和真实的 kudu table schema
-        boolean keyEquals = keyColumnSchemaTypes.equals(kuduTableKeyColumnTypes);
-
-        // 如果启动的时候刚好是delete record，valueSchema==null
-        if (valueSchema != null) {
-            // 1、通过kafka connect中的schema构建预期的kudu table schema
-            HashMap<String, Type> valueColumnSchemaTypes = new HashMap<>();
-            valueSchema
-                    .fields()
-                    .forEach(
-                            field ->
-                                    valueColumnSchemaTypes.put(
-                                            field.name(),
-                                            getDialectSchemaType(
-                                                    field.schema().type(), field.schema().name())));
-
-            // 2、获取真实的 kudu table schema
-            List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
-
-            // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
-            HashMap<String, Type> kuduTableColumnTypes = new HashMap<>();
-            columnSchemas.forEach(
-                    columnSchema ->
-                            kuduTableColumnTypes.put(
-                                    columnSchema.getName(), columnSchema.getType()));
-
-            // 4、对比预期的kudu table schema和真实的 kudu table schema
-            boolean valueEquals = valueColumnSchemaTypes.equals(kuduTableColumnTypes);
-
-            // 5、返回对比结果
-            return keyEquals && valueEquals;
-        } else {
-            // 5、返回对比结果
-            return keyEquals;
-        }
-    }
-
     private KuduTable getKuduTable(String tableName) {
         KuduTable kuduTable;
         try {
@@ -177,6 +108,134 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             throw new DbDdlException("获取kudu表异常.", e);
         }
         return kuduTable;
+    }
+
+    @Override
+    public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
+            throws DbDdlException {
+
+        boolean hasNewFields = false;
+        boolean allowRecordFieldLessThanTableField =
+                sinkConfig.allowRecordFieldsLessThanTableFields;
+
+        KuduTable kuduTable = getTable(tableName);
+
+        // 计算key的Schema是否发生变更
+        // 1、把record的所有字段的数据类型转换成kudu的type
+        HashMap<String, Type> schemaKeyColumnTypes = new HashMap<>();
+        List<Field> keyFields = keySchema.fields();
+        keyFields.forEach(
+                field ->
+                        schemaKeyColumnTypes.put(
+                                field.name(),
+                                getDialectSchemaType(
+                                        field.schema().type(), field.schema().name())));
+        // 2、获取对应的kuduTable的表结构
+        List<ColumnSchema> primaryKeyColumnSchemas = kuduTable.getSchema().getPrimaryKeyColumns();
+
+        // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
+        HashMap<String, Type> kuduTableKeyColumnTypes = new HashMap<>();
+        primaryKeyColumnSchemas.forEach(
+                columnSchema ->
+                        kuduTableKeyColumnTypes.put(
+                                columnSchema.getName(), columnSchema.getType()));
+        // 4、把record的字段和table中的字段进行混合
+        HashMap<String, Type> keyColumnTypes = new HashMap<>();
+        keyColumnTypes.putAll(schemaKeyColumnTypes);
+        keyColumnTypes.putAll(kuduTableKeyColumnTypes);
+
+        // 5、找出record中新增和缺少的字段
+        HashMap<String, Type> newKeyColumns = new HashMap<>();
+        HashMap<String, Type> dropKeyColumns = new HashMap<>();
+        for (String fieldName : keyColumnTypes.keySet()) {
+            Type type = schemaKeyColumnTypes.get(fieldName);
+            Type type2 = kuduTableKeyColumnTypes.get(fieldName);
+            if (type == null) {
+                // record比table少的字段
+                dropKeyColumns.put(fieldName, type);
+            } else if (type2 == null) {
+                // record比table多的字段
+                newKeyColumns.put(fieldName, type);
+            } else {
+                // 两个都有，但是数据类型不一致.
+                if (!type.equals(type2)) {
+                    throw new DbDdlException("record和table中" + fieldName + "字段的数据类型不一致.");
+                }
+            }
+        }
+
+        if (newKeyColumns.size() > 0 || dropKeyColumns.size() > 0) {
+            if (dropKeyColumns.size() > 0) {
+                if (!allowRecordFieldLessThanTableField) {
+                    hasNewFields = true;
+                }
+            }
+
+            if (newKeyColumns.size() > 0) {
+                hasNewFields = true;
+            }
+        }
+
+        // 计算value的Schema是否发生变更
+        if (valueSchema != null) {
+            // 1、把record的所有字段的数据类型转换成kudu的type
+            HashMap<String, Type> schemaValueColumnTypes = new HashMap<>();
+            List<Field> valueFields = valueSchema.fields();
+            valueFields.forEach(
+                    field ->
+                            schemaValueColumnTypes.put(
+                                    field.name(),
+                                    getDialectSchemaType(
+                                            field.schema().type(), field.schema().name())));
+            // 2、获取对应的kuduTable的表结构
+            List<ColumnSchema> columnSchemas = kuduTable.getSchema().getColumns();
+
+            // 3、把从kudu读取的table Column schema组装成Map<columnName, Type> 形式方便对比
+            HashMap<String, Type> kuduTableValueColumnTypes = new HashMap<>();
+            columnSchemas.forEach(
+                    columnSchema ->
+                            kuduTableValueColumnTypes.put(
+                                    columnSchema.getName(), columnSchema.getType()));
+            // 4、把record的字段和table中的字段进行混合
+            HashMap<String, Type> valueColumnTypes = new HashMap<>();
+            valueColumnTypes.putAll(schemaValueColumnTypes);
+            valueColumnTypes.putAll(kuduTableValueColumnTypes);
+
+            // 5、找出record中新增和缺少的字段
+            HashMap<String, Type> newValueColumns = new HashMap<>();
+            HashMap<String, Type> dropValueColumns = new HashMap<>();
+            for (String fieldName : valueColumnTypes.keySet()) {
+                Type type = schemaValueColumnTypes.get(fieldName);
+                Type type2 = kuduTableValueColumnTypes.get(fieldName);
+                if (type == null) {
+                    // record比table少的字段
+                    dropValueColumns.put(fieldName, type);
+                } else if (type2 == null) {
+                    // record比table多的字段
+                    newValueColumns.put(fieldName, type);
+                } else {
+                    // 两个都有，但是数据类型不一致.
+                    if (!type.equals(type2)) {
+                        throw new DbDdlException("record和table中" + fieldName + "字段的数据类型不一致.");
+                    }
+                }
+            }
+
+            int newValueColumnsSize = newValueColumns.size();
+            int dropValueColumnsSize = dropValueColumns.size();
+            if (newValueColumnsSize > 0 || dropValueColumnsSize > 0) {
+                if (dropValueColumnsSize > 0) {
+                    if (!allowRecordFieldLessThanTableField) {
+                        hasNewFields = true;
+                    }
+                }
+
+                if (newValueColumnsSize > 0) {
+                    hasNewFields = true;
+                }
+            }
+        }
+        return hasNewFields;
     }
 
     @Override
@@ -229,7 +288,9 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         changeKeyColumnSchemaTypes.forEach(
                 (columnName, type) -> {
                     if (type == null) {
-                        alterTableOptions.dropColumn(columnName);
+                        if (!sinkConfig.allowRecordFieldsLessThanTableFields()) {
+                            alterTableOptions.dropColumn(columnName);
+                        }
                     } else {
                         Field field = keySchema.field(columnName);
                         Map<String, String> schemaParameters = field.schema().parameters();
@@ -288,7 +349,9 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             changeValueColumnSchemaTypes.forEach(
                     (columnName, type) -> {
                         if (type == null) {
-                            alterTableOptions.dropColumn(columnName);
+                            if (!sinkConfig.allowRecordFieldsLessThanTableFields) {
+                                alterTableOptions.dropColumn(columnName);
+                            }
                         } else {
                             Field field = valueSchema.field(columnName);
                             Map<String, String> schemaParameters = field.schema().parameters();

@@ -28,7 +28,7 @@ public abstract class AbstractSinkTask extends SinkTask {
 
     protected AbstractDialect<?, ?> dialect;
 
-    private final Map<String, Pair<Schema, Schema>> oldTableSchamas = new HashMap<>();
+    private final Map<String, Pair<Schema, Schema>> oldTableSchamasCache = new HashMap<>();
 
     public abstract String getDialectName();
 
@@ -65,7 +65,7 @@ public abstract class AbstractSinkTask extends SinkTask {
                 Schema oldKeySchema = null;
                 Schema oldValueSchema = null;
 
-                Pair<Schema, Schema> schemaPair = oldTableSchamas.get(tableName);
+                Pair<Schema, Schema> schemaPair = oldTableSchamasCache.get(tableName);
                 if (schemaPair != null) {
                     oldKeySchema = schemaPair.getKey();
                     oldValueSchema = schemaPair.getValue();
@@ -169,8 +169,8 @@ public abstract class AbstractSinkTask extends SinkTask {
         if (tableExists) {
 
             // 对比schemaRegister中的schema和DB中的schema的差异，如果没有差异，加载即可，如果有差异，变更表结构
-            boolean compare = dialect.compare(tableName, newKeySchema, newValueSchema);
-            if (!compare) {
+            boolean needChangeTableStructure = dialect.needChangeTableStructure(tableName, newKeySchema, newValueSchema);
+            if (needChangeTableStructure) {
 
                 flushAll();
 
@@ -202,7 +202,7 @@ public abstract class AbstractSinkTask extends SinkTask {
         }
 
         Pair<Schema, Schema> schemaPair = Pair.of(newKeySchema, newValueSchema);
-        oldTableSchamas.put(tableName, schemaPair);
+        oldTableSchamasCache.put(tableName, schemaPair);
     }
 
     private void flushAll() {

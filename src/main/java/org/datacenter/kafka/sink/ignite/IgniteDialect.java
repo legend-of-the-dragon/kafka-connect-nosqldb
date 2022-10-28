@@ -79,9 +79,9 @@ public class IgniteDialect
     }
 
     @Override
-    public boolean compare(String tableName, Schema keySchema, Schema valueSchema)
+    public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
-        return true;
+        return false;
     }
 
     @Override
