@@ -42,7 +42,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
 
     public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY =
             "allow-record-fields-less-than-table-fields";
-    public static final Boolean ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT = true;
+    public static final Boolean ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT = false;
     public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DOC =
             "允许record的数据字段比目标表的字段少,默认允许,就是说只要不新增字段,可以只插入或者更新表中的一部分字段.";
 

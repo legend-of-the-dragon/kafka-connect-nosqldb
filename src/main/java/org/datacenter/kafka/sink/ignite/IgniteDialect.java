@@ -80,7 +80,7 @@ public class IgniteDialect
         // 定义服务器端数据流处理逻辑.(这里由于需要支持update，默认ignite
         // DataStreamer是不支持update的，通过服务器端再处理的方式来对数据重新处理达到update的目的.)
         if (sinkConfig.allowRecordFieldsLessThanTableFields) {
-            
+
             igniteDataStreamer.receiver(
                     (StreamReceiver<Object, Object>)
                             (cache, entries) ->
@@ -194,8 +194,8 @@ public class IgniteDialect
 
     @Override
     public Pair<Boolean, Long> elasticLimit(String connectorName) {
-        //        return ElasticLimit.getElasticLimit(connectorName);
-        return Pair.of(false, 0L);
+        return ElasticLimit.getElasticLimit(connectorName);
+        //        return Pair.of(false, 0L);
     }
 
     private BinaryObject createIgniteBinaryObject(Struct struct, String typeName) {
