@@ -40,6 +40,12 @@ public class AbstractConnectorConfig extends AbstractConfig {
     private static final String BATCH_SIZE_DOC =
             "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 
+    public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY =
+            "allow-record-fields-less-than-table-fields";
+    public static final Boolean ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT = true;
+    public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DOC =
+            "允许record的数据字段比目标表的字段少,默认允许,就是说只要不新增字段,可以只插入或者更新表中的一部分字段.";
+
     public static final String TIME_ZONED_SOURCE_KEY = "timezoned.source";
     private static final Integer TIME_ZONED_SOURCE_DEFAULT = 8;
     private static final String TIME_ZONED_SOURCE_DOC = "源数据库的时区.";
@@ -94,6 +100,12 @@ public class AbstractConnectorConfig extends AbstractConfig {
                         Importance.LOW,
                         BATCH_SIZE_DOC)
                 .define(
+                        ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY,
+                        Type.BOOLEAN,
+                        ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT,
+                        Importance.LOW,
+                        ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DOC)
+                .define(
                         MESSAGE_EXTRACT_KEY,
                         Type.STRING,
                         MESSAGE_EXTRACT_DEFAULT,
@@ -129,6 +141,10 @@ public class AbstractConnectorConfig extends AbstractConfig {
         return this.getString(TABLE_NAME_PREFIX_KEY);
     }
 
+    public boolean allowRecordFieldsLessThanTableFields() {
+        return this.getBoolean(ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY);
+    }
+
     private MessageExtract messageExtract() {
         final String schemaTypeString = getString(AbstractConnectorConfig.MESSAGE_EXTRACT_KEY);
         if (MessageExtract.DEBEZIUM.name().equals(schemaTypeString.toUpperCase())) {
@@ -150,6 +166,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public final String table_name_format;
     public final String tableNamePrefix;
     public final int batchSize;
+    public final boolean allowRecordFieldsLessThanTableFields;
     public final MessageExtract messageExtract;
     public final int timeZonedSource;
     public final int timeZonedTarget;
@@ -164,6 +181,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
         this.table_name_format = table_name_format();
         this.tableNamePrefix = tableNamePrefix();
         this.batchSize = batchSize();
+        this.allowRecordFieldsLessThanTableFields = allowRecordFieldsLessThanTableFields();
         this.messageExtract = messageExtract();
         this.timeZonedSource = timeZonedSource();
         this.timeZonedTarget = timeZonedTarget();

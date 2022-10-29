@@ -8,6 +8,8 @@ import org.apache.ignite.Ignition;
 import org.apache.ignite.binary.BinaryObject;
 import org.apache.ignite.binary.BinaryObjectBuilder;
 import org.apache.ignite.binary.BinaryObjectException;
+import org.apache.ignite.internal.binary.BinaryObjectImpl;
+import org.apache.ignite.stream.StreamReceiver;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
@@ -18,6 +20,7 @@ import org.datacenter.kafka.sink.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,10 +69,68 @@ public class IgniteDialect
         DataGrid.SINK.ensureCache(cacheName);
         IgniteDataStreamer<Object, Object> igniteDataStreamer =
                 DataGrid.SINK.dataStreamer(cacheName);
+
+        igniteDataStreamer.allowOverwrite(true);
+        igniteDataStreamer.keepBinary(true);
+
         if (this.sinkConfig.shallProcessUpdates) {
-            igniteDataStreamer.allowOverwrite(true);
+            igniteDataStreamer.perNodeParallelOperations(sinkConfig.parallelOps);
         }
-        igniteDataStreamer.perNodeParallelOperations(sinkConfig.parallelOps);
+
+        // 定义服务器端数据流处理逻辑.(这里由于需要支持update，默认ignite
+        // DataStreamer是不支持update的，通过服务器端再处理的方式来对数据重新处理达到update的目的.)
+        if (sinkConfig.allowRecordFieldsLessThanTableFields) {
+            
+            igniteDataStreamer.receiver(
+                    (StreamReceiver<Object, Object>)
+                            (cache, entries) ->
+                                    entries.forEach(
+                                            entry -> {
+                                                // get ignite value
+                                                Object key = entry.getKey();
+                                                BinaryObjectImpl igniteValue =
+                                                        (BinaryObjectImpl) cache.get(key);
+
+                                                if (igniteValue != null) {
+
+                                                    // 用kafka中的value替换ignite中的value
+                                                    BinaryObjectImpl kafkaValue =
+                                                            (BinaryObjectImpl) entry.getValue();
+
+                                                    Collection<String> igniteValueFieldNames =
+                                                            igniteValue.type().fieldNames();
+
+                                                    BinaryObjectBuilder
+                                                            igniteValueBinaryObjectBuilder =
+                                                                    igniteValue.toBuilder();
+                                                    for (String fieldName : igniteValueFieldNames) {
+                                                        boolean hasField =
+                                                                kafkaValue.hasField(fieldName);
+                                                        if (hasField) {
+                                                            Object fieldValue =
+                                                                    kafkaValue.field(fieldName);
+                                                            igniteValueBinaryObjectBuilder.setField(
+                                                                    fieldName, fieldValue);
+                                                            //
+                                                            //              System.out.println(
+                                                            //
+                                                            //
+                                                            // "StreamReceiver:replace field:"
+                                                            //
+                                                            //                              +
+                                                            // fieldName);
+                                                        }
+                                                    }
+
+                                                    // 回写结果.
+                                                    cache.put(
+                                                            key,
+                                                            igniteValueBinaryObjectBuilder.build());
+                                                } else {
+                                                    cache.put(key, entry.getValue());
+                                                }
+                                            }));
+        }
         return igniteDataStreamer;
     }
 
@@ -95,8 +156,6 @@ public class IgniteDialect
     @Override
     public boolean applyUpsertRecord(String tableName, SinkRecord sinkRecord) {
 
-        IgniteDataStreamer<Object, Object> dataStreamer = getTable(tableName);
-
         Struct keyStruct =
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.key(), sinkConfig.messageExtract);
@@ -104,6 +163,8 @@ public class IgniteDialect
         Struct valueStruct =
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.value(), sinkConfig.messageExtract);
+
+        IgniteDataStreamer<Object, Object> dataStreamer = getTable(tableName);
 
         BinaryObject keyBinaryObject = createIgniteBinaryObject(keyStruct, tableName + KEY_SUFFIX);
 
@@ -133,7 +194,8 @@ public class IgniteDialect
 
     @Override
     public Pair<Boolean, Long> elasticLimit(String connectorName) {
-        return ElasticLimit.getElasticLimit(connectorName);
+        //        return ElasticLimit.getElasticLimit(connectorName);
+        return Pair.of(false, 0L);
     }
 
     private BinaryObject createIgniteBinaryObject(Struct struct, String typeName) {
