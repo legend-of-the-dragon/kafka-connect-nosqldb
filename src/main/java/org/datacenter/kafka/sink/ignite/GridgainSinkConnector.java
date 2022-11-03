@@ -28,7 +28,7 @@ public class GridgainSinkConnector extends SinkConnector {
     public void start(Map<String, String> map) {
 
         this.sinkConfig = new IgniteSinkConnectorConfig(map);
-
+        ElasticLimit.prometheusServer = sinkConfig.rateLimitPrometheusServer;
         log.info("start ignite sink connector.");
     }
 

@@ -88,46 +88,54 @@ public class IgniteDialect
                                             entry -> {
                                                 // get ignite value
                                                 Object key = entry.getKey();
-                                                BinaryObjectImpl igniteValue =
-                                                        (BinaryObjectImpl) cache.get(key);
-
-                                                if (igniteValue != null) {
-
-                                                    // 用kafka中的value替换ignite中的value
-                                                    BinaryObjectImpl kafkaValue =
-                                                            (BinaryObjectImpl) entry.getValue();
-
-                                                    Collection<String> igniteValueFieldNames =
-                                                            igniteValue.type().fieldNames();
-
-                                                    BinaryObjectBuilder
-                                                            igniteValueBinaryObjectBuilder =
-                                                                    igniteValue.toBuilder();
-                                                    for (String fieldName : igniteValueFieldNames) {
-                                                        boolean hasField =
-                                                                kafkaValue.hasField(fieldName);
-                                                        if (hasField) {
-                                                            Object fieldValue =
-                                                                    kafkaValue.field(fieldName);
-                                                            igniteValueBinaryObjectBuilder.setField(
-                                                                    fieldName, fieldValue);
-                                                            //
-                                                            //              System.out.println(
-                                                            //
-                                                            //
-                                                            // "StreamReceiver:replace field:"
-                                                            //
-                                                            //                              +
-                                                            // fieldName);
-                                                        }
-                                                    }
-
-                                                    // 回写结果.
-                                                    cache.put(
-                                                            key,
-                                                            igniteValueBinaryObjectBuilder.build());
+                                                BinaryObjectImpl kafkaValue =
+                                                        (BinaryObjectImpl) entry.getValue();
+                                                if (kafkaValue == null) {
+                                                    cache.remove(key);
                                                 } else {
-                                                    cache.put(key, entry.getValue());
+                                                    BinaryObjectImpl igniteValue =
+                                                            (BinaryObjectImpl) cache.get(key);
+
+                                                    if (igniteValue != null) {
+
+                                                        // 用kafka中的value替换ignite中的value
+
+                                                        Collection<String> igniteValueFieldNames =
+                                                                igniteValue.type().fieldNames();
+
+                                                        BinaryObjectBuilder
+                                                                igniteValueBinaryObjectBuilder =
+                                                                        igniteValue.toBuilder();
+                                                        for (String fieldName :
+                                                                igniteValueFieldNames) {
+                                                            boolean hasField =
+                                                                    kafkaValue.hasField(fieldName);
+                                                            if (hasField) {
+                                                                Object fieldValue =
+                                                                        kafkaValue.field(fieldName);
+                                                                igniteValueBinaryObjectBuilder
+                                                                        .setField(
+                                                                                fieldName,
+                                                                                fieldValue);
+                                                                //
+                                                                //              System.out.println(
+                                                                //
+                                                                //
+                                                                // "StreamReceiver:replace field:"
+                                                                //
+                                                                //                              +
+                                                                // fieldName);
+                                                            }
+                                                        }
+
+                                                        // 回写结果.
+                                                        cache.put(
+                                                                key,
+                                                                igniteValueBinaryObjectBuilder
+                                                                        .build());
+                                                    } else {
+                                                        cache.put(key, entry.getValue());
+                                                    }
                                                 }
                                             }));
         }
@@ -136,12 +144,19 @@ public class IgniteDialect
 
     @Override
     public boolean tableExists(String tableName) throws DbDdlException {
+
+        // select cache_name from sys.tables where table_name='';
         return true;
     }
 
     @Override
     public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
+
+        // select column_name from sys.table_columns where table_name='';
+
+        // select columns from sys.indexs where table_name='' and index_name='_key_PK'
+
         return false;
     }
 

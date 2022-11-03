@@ -1,6 +1,7 @@
 package org.datacenter.kafka.sink.ignite;
 
 import org.apache.ignite.*;
+import org.apache.ignite.cache.query.SqlFieldsQuery;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.events.Event;
 import org.apache.ignite.events.EventType;
@@ -190,6 +191,15 @@ public enum DataGrid implements AutoCloseable {
     public <K, V> IgniteDataStreamer<K, V> dataStreamer(String cacheName) {
         this.ensureInitialized();
         return this.ignite.dataStreamer(cacheName);
+    }
+
+    public void execDdlSql(String sql) throws Exception {
+        this.ensureInitialized();
+        IgniteCache<Object, Object> cache = this.ignite.getOrCreateCache("CACHES");
+
+        log.info("exec ddl:{}", sql);
+        cache.query(new SqlFieldsQuery(sql)).getAll();
+        log.info("exec ddl complete:{}", sql);
     }
 
     public IgniteBinary binary() {

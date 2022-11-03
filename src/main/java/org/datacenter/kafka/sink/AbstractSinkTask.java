@@ -42,17 +42,19 @@ public abstract class AbstractSinkTask extends SinkTask {
                     getDialectName(),
                     recordsCount);
 
-            Pair<Boolean, Long> elasticLimit = dialect.elasticLimit(sinkConfig.connectorName);
-            Boolean isLimit = elasticLimit.getKey();
-            if (isLimit) {
-                Long limitValue = elasticLimit.getValue();
-                log.info("{}触发限速，限速时长:{}ms", sinkConfig.connectorName, limitValue);
-                try {
-                    Thread.sleep(limitValue);
-                } catch (InterruptedException e) {
-                    log.error("线程暂停异常.", e);
+            if (sinkConfig.rateLimitEnabled) {
+                Pair<Boolean, Long> elasticLimit = dialect.elasticLimit(sinkConfig.connectorName);
+                Boolean isLimit = elasticLimit.getKey();
+                if (isLimit) {
+                    Long limitValue = elasticLimit.getValue();
+                    log.info("{}触发限速，限速时长:{}ms", sinkConfig.connectorName, limitValue);
+                    try {
+                        Thread.sleep(limitValue);
+                    } catch (InterruptedException e) {
+                        log.error("线程暂停异常.", e);
+                    }
+                    log.info("{}限速结束，限速时长:{}ms", sinkConfig.connectorName, limitValue);
                 }
-                log.info("{}限速结束，限速时长:{}ms", sinkConfig.connectorName, limitValue);
             }
 
             int writeCount = 0;
@@ -61,7 +63,7 @@ public abstract class AbstractSinkTask extends SinkTask {
 
                 String tableName = this.getTableName(sinkRecord.topic());
 
-                boolean apply;
+                boolean apply = true;
                 Schema oldKeySchema = null;
                 Schema oldValueSchema = null;
 
@@ -77,7 +79,9 @@ public abstract class AbstractSinkTask extends SinkTask {
                             schemaChanged(tableName, oldValueSchema, sinkRecord);
                         }
 
-                        apply = dialect.applyDeleteRecord(tableName, sinkRecord);
+                        if (sinkConfig.deleteEnabled) {
+                            apply = dialect.applyDeleteRecord(tableName, sinkRecord);
+                        }
                     } else {
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())
                                 || !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
@@ -169,7 +173,8 @@ public abstract class AbstractSinkTask extends SinkTask {
         if (tableExists) {
 
             // 对比schemaRegister中的schema和DB中的schema的差异，如果没有差异，加载即可，如果有差异，变更表结构
-            boolean needChangeTableStructure = dialect.needChangeTableStructure(tableName, newKeySchema, newValueSchema);
+            boolean needChangeTableStructure =
+                    dialect.needChangeTableStructure(tableName, newKeySchema, newValueSchema);
             if (needChangeTableStructure) {
 
                 flushAll();

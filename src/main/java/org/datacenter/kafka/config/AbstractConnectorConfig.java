@@ -40,6 +40,20 @@ public class AbstractConnectorConfig extends AbstractConfig {
     private static final String BATCH_SIZE_DOC =
             "一次写数据库的最大条数。注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.";
 
+    public static final String DELETE_ENABLED = "delete.enabled";
+    private static final Boolean DELETE_ENABLED_DEFAULT = true;
+    private static final String DELETE_ENABLED_DOC =
+            "Whether to treat ``null`` record values as deletes. Requires ``pk.mode`` "
+                    + "to be ``record_key``.";
+
+    public static final String RATE_LIMIT_PROMETHEUS_SERVER_KEY = "rate.limit.prometheus.server";
+    public static final String RATE_LIMIT_PROMETHEUS_SERVER_DEFAULT = "http://172.30.80.70:9090/";
+    private static final String RATE_LIMIT_PROMETHEUS_SERVER_DOC = "用于限速计算的prometheus地址.";
+
+    public static final String RATE_LIMIT_ENABLED = "limit.enabled";
+    private static final Boolean RATE_LIMIT_ENABLED_DEFAULT = true;
+    private static final String RATE_LIMIT_ENABLED_DOC = "是否限速，默认不限速.";
+
     public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY =
             "allow-record-fields-less-than-table-fields";
     public static final Boolean ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT = false;
@@ -100,6 +114,24 @@ public class AbstractConnectorConfig extends AbstractConfig {
                         Importance.LOW,
                         BATCH_SIZE_DOC)
                 .define(
+                        DELETE_ENABLED,
+                        Type.BOOLEAN,
+                        DELETE_ENABLED_DEFAULT,
+                        Importance.MEDIUM,
+                        DELETE_ENABLED_DOC)
+                .define(
+                        RATE_LIMIT_PROMETHEUS_SERVER_KEY,
+                        Type.STRING,
+                        RATE_LIMIT_PROMETHEUS_SERVER_DEFAULT,
+                        Importance.LOW,
+                        RATE_LIMIT_PROMETHEUS_SERVER_DOC)
+                .define(
+                        RATE_LIMIT_ENABLED,
+                        Type.BOOLEAN,
+                        RATE_LIMIT_ENABLED_DEFAULT,
+                        Importance.LOW,
+                        RATE_LIMIT_ENABLED_DOC)
+                .define(
                         ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY,
                         Type.BOOLEAN,
                         ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DEFAULT,
@@ -137,8 +169,20 @@ public class AbstractConnectorConfig extends AbstractConfig {
         return this.getString(TABLE_NAME_FORMAT_KEY);
     }
 
+    public String rateLimitPrometheusServer() {
+        return this.getString(RATE_LIMIT_PROMETHEUS_SERVER_KEY);
+    }
+
+    public boolean rateLimitEnabled() {
+        return this.getBoolean(RATE_LIMIT_ENABLED);
+    }
+
     public String tableNamePrefix() {
         return this.getString(TABLE_NAME_PREFIX_KEY);
+    }
+
+    public boolean deleteEnabled() {
+        return this.getBoolean(DELETE_ENABLED);
     }
 
     public boolean allowRecordFieldsLessThanTableFields() {
@@ -166,6 +210,9 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public final String table_name_format;
     public final String tableNamePrefix;
     public final int batchSize;
+    public final boolean deleteEnabled;
+    public final String rateLimitPrometheusServer;
+    public final boolean rateLimitEnabled;
     public final boolean allowRecordFieldsLessThanTableFields;
     public final MessageExtract messageExtract;
     public final int timeZonedSource;
@@ -181,9 +228,12 @@ public class AbstractConnectorConfig extends AbstractConfig {
         this.table_name_format = table_name_format();
         this.tableNamePrefix = tableNamePrefix();
         this.batchSize = batchSize();
+        this.deleteEnabled = deleteEnabled();
         this.allowRecordFieldsLessThanTableFields = allowRecordFieldsLessThanTableFields();
         this.messageExtract = messageExtract();
         this.timeZonedSource = timeZonedSource();
         this.timeZonedTarget = timeZonedTarget();
+        this.rateLimitEnabled = rateLimitEnabled();
+        this.rateLimitPrometheusServer = rateLimitPrometheusServer();
     }
 }

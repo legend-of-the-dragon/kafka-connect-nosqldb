@@ -154,7 +154,7 @@ public class ElasticLimit {
         }
     }
 
-    private static String prometheusServer = "http://172.30.80.70:9090/";
+    public static String prometheusServer = "http://172.30.80.70:9090/";
 
     public static List<VectorData> executePrometheusInstantQuery(String queryString) {
 
