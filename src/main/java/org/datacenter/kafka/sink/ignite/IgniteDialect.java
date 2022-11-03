@@ -99,7 +99,6 @@ public class IgniteDialect
                                                     if (igniteValue != null) {
 
                                                         // 用kafka中的value替换ignite中的value
-
                                                         Collection<String> igniteValueFieldNames =
                                                                 igniteValue.type().fieldNames();
 
@@ -134,7 +133,7 @@ public class IgniteDialect
                                                                 igniteValueBinaryObjectBuilder
                                                                         .build());
                                                     } else {
-                                                        cache.put(key, entry.getValue());
+                                                        cache.put(key, kafkaValue);
                                                     }
                                                 }
                                             }));
