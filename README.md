@@ -1,54 +1,55 @@
 # Kafka Connect nosqldb Connector
 
 [kafka-connect-nosqldb](https://github.com/legend-of-the-dragon/kafka-connect-nosqldb)
-ÊÇÒ»¸öÎªÁË½â¾ö´ÓkafkaÏû·ÑÊı¾İsinkµ½nosqlµÄ»ùÓÚkafka connectµÄ²å¼ş¡£Ä¿Ç°Í¨¹ıjava api Ö§³ÖigniteºÍkudu¡£
+æ˜¯ä¸€ä¸ªä¸ºäº†è§£å†³ä»kafkaæ¶ˆè´¹æ•°æ®sinkåˆ°nosqlçš„åŸºäºkafka connectçš„æ’ä»¶ã€‚ç›®å‰é€šè¿‡java api æ”¯æŒigniteå’Œkuduã€‚
 
 # Documentation
 
-### ×¢ÒâÊÂÏî
-1. debeziumĞ´kafkaµÄÊ±ºò£¬¾¡¿ÉÄÜÒ»¸ötopicÖ»ÓĞÒ»¸ö·ÖÇø£¬²»È»Ò»Ğ©ÄªÃûÆäÃîµÄÎÊÌâ¶¼»áÒòÎª·ÖÇø³öÏÖ£¬ÓÈÆäÊÇdeleteµ¼ÖÂµÄÎÊÌâ¡£
-2. igniteÄ¿Ç°´´½¨±í½á¹¹µÄÊ±ºòÇ§Íò²»ÄÜÅä´í£¬Ò»µ©Åä´í·Ç³£ÄÑ¶¨Î»ÎÊÌâ£¬¶øÇÒĞŞ¸´µÄÊ±ºòÉ¾³ı²»Ö»ÊÇÓÃsqlÉ¾³ı±í£¬»¹ĞèÒªÍ¨¹ıÔ­ÉúAPIÉ¾³ıcache¡£
-3. kuduÄ¿Ç°¶ÔalterÓï¾äÖ§³Ö±È½ÏÓĞÏŞ£¬Èç¹û³öÏÖalterµÄÊ±ºò£¬±£ÏÕÆğ¼û£¬É¾³ıkuduÖĞµÄ±í£¬É¾³ıkafkaÖĞµÄtopic£¬ÖØĞÂ³éÒ»±éµ±Ç°±í¡£
+### æ³¨æ„äº‹é¡¹
+1. debeziumå†™kafkaçš„æ—¶å€™ï¼Œå°½å¯èƒ½ä¸€ä¸ªtopicåªæœ‰ä¸€ä¸ªåˆ†åŒºï¼Œä¸ç„¶ä¸€äº›è«åå…¶å¦™çš„é—®é¢˜éƒ½ä¼šå› ä¸ºåˆ†åŒºå‡ºç°ï¼Œå°¤å…¶æ˜¯deleteå¯¼è‡´çš„é—®é¢˜ã€‚
+2. igniteç›®å‰åˆ›å»ºè¡¨ç»“æ„çš„æ—¶å€™åƒä¸‡ä¸èƒ½é…é”™ï¼Œä¸€æ—¦é…é”™éå¸¸éš¾å®šä½é—®é¢˜ï¼Œè€Œä¸”ä¿®å¤çš„æ—¶å€™åˆ é™¤ä¸åªæ˜¯ç”¨sqlåˆ é™¤è¡¨ï¼Œè¿˜éœ€è¦é€šè¿‡åŸç”ŸAPIåˆ é™¤cacheã€‚
+3. kuduç›®å‰å¯¹alterè¯­å¥æ”¯æŒæ¯”è¾ƒæœ‰é™ï¼Œå¦‚æœå‡ºç°alterçš„æ—¶å€™ï¼Œä¿é™©èµ·è§ï¼Œåˆ é™¤kuduä¸­çš„è¡¨ï¼Œåˆ é™¤kafkaä¸­çš„topicï¼Œé‡æ–°æŠ½ä¸€éå½“å‰è¡¨ã€‚
 
-## kafka consumer ²ÎÊı
+## kafka consumer å‚æ•°
 
-| ²ÎÊıÃû³Æ             | ÊÇ·ñ±ØÌî | Ä¬ÈÏÖµ | ËµÃ÷                           |
+| å‚æ•°åç§°             | æ˜¯å¦å¿…å¡« | é»˜è®¤å€¼ | è¯´æ˜                           |
 |------------------|------|-----|------------------------------|
-| consumer.max.poll.records | ·ñ    | 500 | Ò»´Î´Ókafka×î¶àÀ­È¡µÄÏûÏ¢ÌõÊı£¬½¨ÒéÉèÖÃÎª1000 .Õâ¸ö²ÎÊıÉèÖÃÔÚkafka connect ·şÎñÆ÷µÄconnect-avro-distributed.propertiesÎÄ¼şÖĞ. |
+| consumer.max.poll.records | å¦    | 500 | ä¸€æ¬¡ä»kafkaæœ€å¤šæ‹‰å–çš„æ¶ˆæ¯æ¡æ•°ï¼Œå»ºè®®è®¾ç½®ä¸º1000 .è¿™ä¸ªå‚æ•°è®¾ç½®åœ¨kafka connect æœåŠ¡å™¨çš„connect-avro-distributed.propertiesæ–‡ä»¶ä¸­. |
 
-## ¹«¹²²ÎÊı
+## å…¬å…±å‚æ•°
 
-| ²ÎÊıÃû³Æ                 | ÊÇ·ñ±ØÌî | Ä¬ÈÏÖµ               | ËµÃ÷                                                                                                                                                                            |
+| å‚æ•°åç§°                 | æ˜¯å¦å¿…å¡« | é»˜è®¤å€¼               | è¯´æ˜                                                                                                                                                                            |
 |----------------------|------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| topic.replace.prefix | ·ñ    | null              | °´ÕÕÅäÖÃµÄÄÚÈİ×÷ÎªÇ°×º°ÑtopicNameµÄÖµÌæ»»µô. eg: topicNameÎªdb51044.sky_test.t_wk_quota_bizµÄÊ±ºò,topic.replace.prefixÎª"db51044.sky_test."Ôò»áµ¼ÖÂtableName±äÎªt_wk_quota_biz.                           |
-| table.name.format    | ·ñ    | "_"               | °ÑÊ£ÓàµÄtableNameÖĞµÄ'.'Ìæ»»³ÉÅäÖÃµÄÄÚÈİ. eg: topicNameÎªdb51044.sky_test.t_wk_quota_bizµÄÊ±ºò,table.name.formatÎª"_"Ôò»áµ¼ÖÂtableName±äÎªdb51044_sky_test_t_wk_quota_biz¡£×¢Òâtopic.replace.prefix»áÓÅÏÈÖ´ĞĞ. |
-| table.name.prefix    | ·ñ    | null              | °´ÕÕÅäÖÃµÄÄÚÈİ×÷ÎªÇ°×º¼ÓÉÏ°ÑÊ£ÓàµÄtableName×÷ÎªĞÂµÄtableName                                                                                                                                       |
-| message.extract      | ·ñ    | "SCHEMA_REGISTRY" | kafkaÖĞ´æ´¢µÄÊı¾İĞĞµÄÊı¾İ½á¹¹£¬ÖµµÄÑ¡ÏîÎª"SCHEMA_REGISTRY"¡¢"DEBEZIUM"                                                                                                                           |
-| batch.size           | ·ñ    | 1000             | Ò»´ÎĞ´Êı¾İ¿âµÄ×î´óÌõÊı¡£ ×¢£ºÅúÁ¿Ğ´ÈëÊı¾İ¿âÓĞÖúÓÚÌá¹©Ğ§ÂÊ£¬µ«ÊÇÌ«¸ßÁË¿ÉÄÜ»áµ¼ÖÂ¿ÉÄÜÆæİâµÄ¹ÊÕÏ³öÏÖ.kudu³¬¹ıÓĞ¿ÉÄÜ»áµ¼ÖÂbuffer²»¹»£¬»¹µÃµ÷ÕûbufferµÄ´óĞ¡.                                                                                                                             |
+| topic.replace.prefix | å¦    | null              | æŒ‰ç…§é…ç½®çš„å†…å®¹ä½œä¸ºå‰ç¼€æŠŠtopicNameçš„å€¼æ›¿æ¢æ‰. eg: topicNameä¸ºdb51044.sky_test.t_wk_quota_bizçš„æ—¶å€™,topic.replace.prefixä¸º"db51044.sky_test."åˆ™ä¼šå¯¼è‡´tableNameå˜ä¸ºt_wk_quota_biz.                           |
+| table.name.format    | å¦    | "_"               | æŠŠå‰©ä½™çš„tableNameä¸­çš„'.'æ›¿æ¢æˆé…ç½®çš„å†…å®¹. eg: topicNameä¸ºdb51044.sky_test.t_wk_quota_bizçš„æ—¶å€™,table.name.formatä¸º"_"åˆ™ä¼šå¯¼è‡´tableNameå˜ä¸ºdb51044_sky_test_t_wk_quota_bizã€‚æ³¨æ„topic.replace.prefixä¼šä¼˜å…ˆæ‰§è¡Œ. |
+| table.name.prefix    | å¦    | null              | æŒ‰ç…§é…ç½®çš„å†…å®¹ä½œä¸ºå‰ç¼€åŠ ä¸ŠæŠŠå‰©ä½™çš„tableNameä½œä¸ºæ–°çš„tableName                                                                                                                                       |
+| message.extract      | å¦    | "SCHEMA_REGISTRY" | kafkaä¸­å­˜å‚¨çš„æ•°æ®è¡Œçš„æ•°æ®ç»“æ„ï¼Œå€¼çš„é€‰é¡¹ä¸º"SCHEMA_REGISTRY"ã€"DEBEZIUM"                                                                                                                           |
+| batch.size           | å¦    | 1000             | ä¸€æ¬¡å†™æ•°æ®åº“çš„æœ€å¤§æ¡æ•°ã€‚ æ³¨ï¼šæ‰¹é‡å†™å…¥æ•°æ®åº“æœ‰åŠ©äºæä¾›æ•ˆç‡ï¼Œä½†æ˜¯å¤ªé«˜äº†å¯èƒ½ä¼šå¯¼è‡´å¯èƒ½å¥‡è‘©çš„æ•…éšœå‡ºç°.kuduè¶…è¿‡æœ‰å¯èƒ½ä¼šå¯¼è‡´bufferä¸å¤Ÿï¼Œè¿˜å¾—è°ƒæ•´bufferçš„å¤§å°.                                                                                                                             |
+| delete.enabled       | å¦    | true             | deleteçš„æ“ä½œæ˜¯å¦å¯ç”¨ï¼Œé»˜è®¤true.                                                                                                                             |
 
-## ignite ²ÎÊı
+## ignite å‚æ•°
 
-| ²ÎÊıÃû³Æ                  | ÊÇ·ñ±ØÌî | Ä¬ÈÏÖµ  | ËµÃ÷                                                                                                                      |
+| å‚æ•°åç§°                  | æ˜¯å¦å¿…å¡« | é»˜è®¤å€¼  | è¯´æ˜                                                                                                                      |
 |-----------------------|------|------|-------------------------------------------------------------------------------------------------------------------------|
-| ignite.cfg            |  ÊÇ   | ÎŞÄ¬ÈÏÖµ | Path to the Ignite configuration file. $IGNITE_HOME/config/default-config.xml is used if no Ignite config is configured |
-| shall.process.updates |  ·ñ   | true | ÊÇ·ñÖ§³Öupsert£¬Õâ¸ö²»½¨Òé¸Ä£¬Ä¿Ç°Ö»Ö§³Öupsert                                                                                           |
+| ignite.cfg            |  æ˜¯   | æ— é»˜è®¤å€¼ | Path to the Ignite configuration file. $IGNITE_HOME/config/default-config.xml is used if no Ignite config is configured |
+| shall.process.updates |  å¦   | true | æ˜¯å¦æ”¯æŒupsertï¼Œè¿™ä¸ªä¸å»ºè®®æ”¹ï¼Œç›®å‰åªæ”¯æŒupsert                                                                                           |
 
 ```shell
-# ×¢Òâ: ´´½¨ignite±í½á¹¹µÄÊ±ºò£¬ĞèÒªÔÚWITHÉèÖÃÒÔÏÂ¼¸¸ö²ÎÊı£º
-# CACHE_NAME=<${tableName}>; tableNameÊÇkafka connectÖĞµÄtopic¾­¹ıÅäÖÃºóµÄ×îÖÕ±íÃû£¬ºÍigniteÖĞµÄtableName¿ÉÒÔ±£³ÖÒ»ÖÂ£¬Ò²¿ÉÒÔ²»±£³ÖÒ»ÖÂ;
+# æ³¨æ„: åˆ›å»ºigniteè¡¨ç»“æ„çš„æ—¶å€™ï¼Œéœ€è¦åœ¨WITHè®¾ç½®ä»¥ä¸‹å‡ ä¸ªå‚æ•°ï¼š
+# CACHE_NAME=<${tableName}>; tableNameæ˜¯kafka connectä¸­çš„topicç»è¿‡é…ç½®åçš„æœ€ç»ˆè¡¨åï¼Œå’Œigniteä¸­çš„tableNameå¯ä»¥ä¿æŒä¸€è‡´ï¼Œä¹Ÿå¯ä»¥ä¸ä¿æŒä¸€è‡´;
 # KEY_TYPE=<${CACHE_NAME}.Key">;
 # VALUE_TYPE=<${CACHE_NAME}.Value">;
 ```
 
-## kudu ²ÎÊı
+## kudu å‚æ•°
 
-| ²ÎÊıÃû³Æ                      | ÊÇ·ñ±ØÌî | Ä¬ÈÏÖµ  | ËµÃ÷                                   |
+| å‚æ•°åç§°                      | æ˜¯å¦å¿…å¡« | é»˜è®¤å€¼  | è¯´æ˜                                   |
 |---------------------------|------|------|--------------------------------------|
-| kudu.masters              |  ÊÇ   | ÎŞÄ¬ÈÏÖµ | kafka master ip£¬¶à¸ömaster¿ÉÒÔÓÃ","¸ô¿ª     |
-| default.partition.buckets |  ·ñ   | 5    | ×Ô¶¯´´½¨kudu±íµÄÊ±ºò£¬Ö÷¼üµÄHashPartitions ÉèÖÃµÄÊıÖµ |
+| kudu.masters              |  æ˜¯   | æ— é»˜è®¤å€¼ | kafka master ipï¼Œå¤šä¸ªmasterå¯ä»¥ç”¨","éš”å¼€     |
+| default.partition.buckets |  å¦   | 5    | è‡ªåŠ¨åˆ›å»ºkuduè¡¨çš„æ—¶å€™ï¼Œä¸»é”®çš„HashPartitions è®¾ç½®çš„æ•°å€¼ |
 
-## ¹«¹²Êı¾İÀàĞÍÓëkafka connectµÄ¶ÔÕÕ¹ØÏµ (×¢Òâ:²»ÔÚ±íÖĞµÄÊı¾İÀàĞÍÔİ²»Ö§³Ö)
-| nosqldb-kafka-connect Êı¾İÀàĞÍ | kafka connectÊı¾İÀàĞÍ |kafka connect ÀàĞÍÃû³Æ| debezium Êı¾İÀàĞÍ | mysql Êı¾İÀàĞÍ |
+## å…¬å…±æ•°æ®ç±»å‹ä¸kafka connectçš„å¯¹ç…§å…³ç³» (æ³¨æ„:ä¸åœ¨è¡¨ä¸­çš„æ•°æ®ç±»å‹æš‚ä¸æ”¯æŒ)
+| nosqldb-kafka-connect æ•°æ®ç±»å‹ | kafka connectæ•°æ®ç±»å‹ |kafka connect ç±»å‹åç§°| debezium æ•°æ®ç±»å‹ | mysql æ•°æ®ç±»å‹ |
 |---------------------------|------|------|-------|------|
 | TINYINT | INT8  | null |
 | SHORT | INT16  | null |
@@ -70,8 +71,8 @@
 | STRING | STRING  | io.debezium.data.Json |
 | BYTES | BYTES  | io.debezium.data.Bits |
 
-## igniteºÍ¹«¹²Êı¾İÀàĞÍµÄ¶ÔÕÕ¹ØÏµ (×¢Òâ:²»ÔÚ±íÖĞµÄÊı¾İÀàĞÍÔİ²»Ö§³Ö)
-| nosqldb-kafka-connect Êı¾İÀàĞÍ | ignite Êı¾İÀàĞÍ | 
+## igniteå’Œå…¬å…±æ•°æ®ç±»å‹çš„å¯¹ç…§å…³ç³» (æ³¨æ„:ä¸åœ¨è¡¨ä¸­çš„æ•°æ®ç±»å‹æš‚ä¸æ”¯æŒ)
+| nosqldb-kafka-connect æ•°æ®ç±»å‹ | ignite æ•°æ®ç±»å‹ | 
 |---------------------------|------|
 | TINYINT | TINYINT  |
 | SHORT | SHORT  | 
@@ -86,8 +87,8 @@
 |DATE|DATE|
 |TIME|TIME|
 |DECIMAL|DECIMAL|
-## kuduºÍ¹«¹²Êı¾İÀàĞÍµÄ¶ÔÕÕ¹ØÏµ
-| nosqldb-kafka-connect Êı¾İÀàĞÍ | kudu Êı¾İÀàĞÍ | 
+## kuduå’Œå…¬å…±æ•°æ®ç±»å‹çš„å¯¹ç…§å…³ç³»
+| nosqldb-kafka-connect æ•°æ®ç±»å‹ | kudu æ•°æ®ç±»å‹ | 
 |---------------------------|------|
 | TINYINT | INT8  |
 | SHORT | INT16  | 
