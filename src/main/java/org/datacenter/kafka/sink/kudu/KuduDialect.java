@@ -761,6 +761,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (booleanValue != null) {
                     row.addBoolean(columnName, booleanValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case TINYINT:
@@ -769,6 +771,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (tinyintValue != null) {
                     row.addByte(columnName, tinyintValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case SHORT:
@@ -777,6 +781,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (shortValue != null) {
                     row.addShort(columnName, shortValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case INT:
@@ -785,6 +791,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (intValue != null) {
                     row.addInt(columnName, intValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case LONG:
@@ -793,6 +801,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (longValue != null) {
                     row.addLong(columnName, longValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case FLOAT:
@@ -801,6 +811,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (floatValue != null) {
                     row.addFloat(columnName, floatValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case DOUBLE:
@@ -809,6 +821,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (doubleValue != null) {
                     row.addDouble(columnName, doubleValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case STRING:
@@ -817,6 +831,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (stringValue != null) {
                     row.addString(columnName, stringValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case BYTES:
@@ -825,6 +841,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (bytesValue != null) {
                     row.addBinary(columnName, bytesValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case TIME:
@@ -833,6 +851,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (timeValue != null) {
                     row.addString(columnName, timeValue.toString());
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case DATE:
@@ -841,6 +861,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (dateValue != null) {
                     row.addString(columnName, dateValue.toString());
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case TIMESTAMP:
@@ -849,6 +871,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (timestampValue != null) {
                     row.addTimestamp(columnName, timestampValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             case DECIMAL:
@@ -857,6 +881,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (decimalValue != null) {
                     row.addDecimal(columnName, decimalValue);
+                } else if (sinkConfig.ignoreNullValues) {
+                    row.setNull(columnName);
                 }
                 break;
             default:

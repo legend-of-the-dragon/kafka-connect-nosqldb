@@ -60,6 +60,11 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public static final String ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DOC =
             "允许record的数据字段比目标表的字段少,默认允许,就是说只要不新增字段,可以只插入或者更新表中的一部分字段.";
 
+    public static final String IGNORE_NULL_VALUES_KEY = "ignore-null-values";
+    public static final Boolean IGNORE_NULL_VALUES_DEFAULT = false;
+    public static final String IGNORE_NULL_VALUES_DOC =
+            "是否允许record中的空字段覆盖数据库中的数据，默认允许，以record输入的为准.";
+
     public static final String TIME_ZONED_SOURCE_KEY = "timezoned.source";
     private static final Integer TIME_ZONED_SOURCE_DEFAULT = 8;
     private static final String TIME_ZONED_SOURCE_DOC = "源数据库的时区.";
@@ -138,6 +143,12 @@ public class AbstractConnectorConfig extends AbstractConfig {
                         Importance.LOW,
                         ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_DOC)
                 .define(
+                        IGNORE_NULL_VALUES_KEY,
+                        Type.BOOLEAN,
+                        IGNORE_NULL_VALUES_DEFAULT,
+                        Importance.LOW,
+                        IGNORE_NULL_VALUES_DOC)
+                .define(
                         MESSAGE_EXTRACT_KEY,
                         Type.STRING,
                         MESSAGE_EXTRACT_DEFAULT,
@@ -189,6 +200,10 @@ public class AbstractConnectorConfig extends AbstractConfig {
         return this.getBoolean(ALLOW_RECORD_FIELDS_LESSTHAN_TABLE_FIELDS_KEY);
     }
 
+    public boolean isIgnoreNullValues() {
+        return this.getBoolean(IGNORE_NULL_VALUES_KEY);
+    }
+
     private MessageExtract messageExtract() {
         final String schemaTypeString = getString(AbstractConnectorConfig.MESSAGE_EXTRACT_KEY);
         if (MessageExtract.DEBEZIUM.name().equals(schemaTypeString.toUpperCase())) {
@@ -218,6 +233,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
     public final int timeZonedSource;
     public final int timeZonedTarget;
     public final String connectorName;
+    public final boolean ignoreNullValues;
 
     public AbstractConnectorConfig(ConfigDef configDef, Map<String, String> props) {
 
@@ -230,6 +246,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
         this.batchSize = batchSize();
         this.deleteEnabled = deleteEnabled();
         this.allowRecordFieldsLessThanTableFields = allowRecordFieldsLessThanTableFields();
+        this.ignoreNullValues = isIgnoreNullValues();
         this.messageExtract = messageExtract();
         this.timeZonedSource = timeZonedSource();
         this.timeZonedTarget = timeZonedTarget();

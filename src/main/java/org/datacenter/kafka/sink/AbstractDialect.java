@@ -10,11 +10,11 @@ import org.apache.kafka.connect.sink.SinkRecord;
  * @date 2022-05-24
  * @discription
  */
-public abstract class AbstractDialect<Table, Type> {
+public abstract class AbstractDialect<SinkTable, SinkDataType> {
 
     public abstract boolean tableExists(String tableName) throws DbDdlException;
 
-    public abstract Table getTable(String tableName) throws DbDdlException;
+    public abstract SinkTable getTable(String tableName) throws DbDdlException;
 
     public abstract boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException;
@@ -35,5 +35,5 @@ public abstract class AbstractDialect<Table, Type> {
 
     public abstract void stop() throws ConnectException;
 
-    public abstract Type getDialectSchemaType(Schema.Type columnType, String columnSchemaName);
+    public abstract SinkDataType getDialectSchemaType(Schema.Type columnType, String columnSchemaName);
 }
