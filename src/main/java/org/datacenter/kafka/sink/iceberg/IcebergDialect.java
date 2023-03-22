@@ -271,6 +271,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
 
         try {
             taskWriter.write(icebergRecord);
+            taskWriter.close();
         } catch (IOException e) {
             throw new DbDmlException("写入数据错误.", e);
         }
