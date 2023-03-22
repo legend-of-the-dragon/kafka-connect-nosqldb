@@ -67,6 +67,7 @@ public abstract class BaseDeltaTaskWriter extends BaseTaskWriter<Record> {
     }
 
     public class RowDataDeltaWriter extends BaseEqualityDeltaWriter {
+
         RowDataDeltaWriter(PartitionKey partition) {
             super(partition, schema, deleteSchema);
         }

@@ -283,7 +283,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         if (taskWriter == null) {
             Table icebergTable = getTable(tableName);
             taskWriter = writerFactory.create(icebergTable, taskId);
-            taskWriterCache.put(tableName, taskWriter);
+//            taskWriterCache.put(tableName, taskWriter);
         }
         return taskWriter;
     }
