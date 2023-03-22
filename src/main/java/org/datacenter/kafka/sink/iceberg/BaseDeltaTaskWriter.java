@@ -51,12 +51,12 @@ public abstract class BaseDeltaTaskWriter extends BaseTaskWriter<Record> {
         int op = sinkRecord.getOp();
         // upsert
         if (op == 2) {
-            writer.delete(sinkRecord);
+            writer.deleteKey(sinkRecord);
             writer.write(sinkRecord);
         }
         // delete
         else if (op == 0) {
-            writer.delete(sinkRecord);
+            writer.deleteKey(sinkRecord);
         }
         // insert
         else if (op == 1) {

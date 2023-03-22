@@ -35,7 +35,6 @@ public class IcebergTableWriterFactory {
         FileFormat format = IcebergUtil.getTableFileFormat(icebergTable);
         GenericAppenderFactory appenderFactory = IcebergUtil.getTableAppender(icebergTable);
         int partitionId = 1;
-//        int partitionId = Integer.parseInt(FORMATTER.format(Instant.now()));
         OutputFileFactory fileFactory =
                 OutputFileFactory.builderFor(icebergTable, partitionId, taskId)
                         .defaultSpec(icebergTable.spec())

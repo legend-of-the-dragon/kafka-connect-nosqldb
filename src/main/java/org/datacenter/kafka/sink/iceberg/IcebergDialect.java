@@ -271,7 +271,6 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
 
         try {
             taskWriter.write(icebergRecord);
-            taskWriter.close();
         } catch (IOException e) {
             throw new DbDmlException("写入数据错误.", e);
         }
@@ -280,9 +279,12 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     Map<String, TaskWriter<Record>> taskWriterCache = new HashMap<>();
 
     public TaskWriter<Record> getTaskWriter(String tableName) {
-        TaskWriter<Record> taskWriter;
-        Table icebergTable = getTable(tableName);
-        taskWriter = writerFactory.create(icebergTable, taskId);
+        TaskWriter<Record> taskWriter = taskWriterCache.get(tableName);
+        if (taskWriter == null) {
+            Table icebergTable = getTable(tableName);
+            taskWriter = writerFactory.create(icebergTable, taskId);
+            taskWriterCache.put(tableName, taskWriter);
+        }
         return taskWriter;
     }
 
@@ -300,11 +302,12 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
             TaskWriter<Record> taskWriter = getTaskWriter(tableName);
             WriteResult result;
             try {
-                //  taskWriter.close();
                 result = taskWriter.complete();
             } catch (IOException e) {
                 throw new DbDmlException("iceberg flush 失败.", e);
             }
+
+            taskWriterCache.remove(tableName);
 
             Table icebergTable = getTable(tableName);
             RowDelta rowDelta = icebergTable.newRowDelta();
