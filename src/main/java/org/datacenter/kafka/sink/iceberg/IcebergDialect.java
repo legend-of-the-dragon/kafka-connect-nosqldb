@@ -279,12 +279,9 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     Map<String, TaskWriter<Record>> taskWriterCache = new HashMap<>();
 
     public TaskWriter<Record> getTaskWriter(String tableName) {
-        TaskWriter<Record> taskWriter = taskWriterCache.get(tableName);
-        if (taskWriter == null) {
-            Table icebergTable = getTable(tableName);
-            taskWriter = writerFactory.create(icebergTable, taskId);
-//            taskWriterCache.put(tableName, taskWriter);
-        }
+        TaskWriter<Record> taskWriter;
+        Table icebergTable = getTable(tableName);
+        taskWriter = writerFactory.create(icebergTable, taskId);
         return taskWriter;
     }
 
