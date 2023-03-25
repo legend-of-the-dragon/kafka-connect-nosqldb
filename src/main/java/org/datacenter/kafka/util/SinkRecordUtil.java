@@ -3,7 +3,7 @@ package org.datacenter.kafka.util;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
-import org.datacenter.kafka.config.AbstractConnectorConfig;
+import org.datacenter.kafka.sink.AbstractConnectorConfig;
 
 import java.util.List;
 import java.util.Map;

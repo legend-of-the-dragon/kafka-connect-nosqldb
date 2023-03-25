@@ -1,11 +1,10 @@
-package org.datacenter.kafka.sink.kudu;
+package org.datacenter.kafka.sink.ignite.connect;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
-import org.datacenter.kafka.config.AbstractConnectorConfig;
-import org.datacenter.kafka.config.Version;
-import org.datacenter.kafka.config.kudu.KuduSinkConnectorConfig;
+import org.datacenter.kafka.Version;
+import org.datacenter.kafka.sink.ignite.ElasticLimit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,27 +13,28 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * KuduSinkConnector
+ * IgniteSinkConnector
  *
  * @author sky
  * @date 2022-05-10
  */
-public class KuduSinkConnector extends SinkConnector {
+public class GridgainSinkConnector extends SinkConnector {
 
-    private static final Logger log = LoggerFactory.getLogger(KuduSinkConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(GridgainSinkConnector.class);
 
-    private AbstractConnectorConfig sinkConfig;
+    private IgniteSinkConnectorConfig sinkConfig;
 
     @Override
     public void start(Map<String, String> map) {
 
-        this.sinkConfig = new KuduSinkConnectorConfig(map);
-        log.info("start kudu sink connector.");
+        this.sinkConfig = new IgniteSinkConnectorConfig(map);
+        ElasticLimit.prometheusServer = sinkConfig.rateLimitPrometheusServer;
+        log.info("start ignite sink connector.");
     }
 
     @Override
     public Class<? extends Task> taskClass() {
-        return KuduSinkTask.class;
+        return IgniteSinkTask.class;
     }
 
     @Override
@@ -55,17 +55,16 @@ public class KuduSinkConnector extends SinkConnector {
     @Override
     public void stop() {
 
-        log.info("stop kudu sink connector.");
+        log.info("stop ignite sink connector.");
     }
 
     @Override
     public ConfigDef config() {
-        return KuduSinkConnectorConfig.configDef();
+        return IgniteSinkConnectorConfig.configDef();
     }
 
     @Override
     public String version() {
-        log.info("get kudu sink connector version.");
         return Version.getVersion();
     }
 }

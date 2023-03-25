@@ -20,6 +20,8 @@ import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.datacenter.kafka.sink.*;
+import org.datacenter.kafka.sink.exception.DbDdlException;
+import org.datacenter.kafka.sink.exception.DbDmlException;
 import org.datacenter.kafka.sink.iceberg.connect.IcebergSinkConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,12 +107,16 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
+
         return false;
     }
 
     @Override
     public void alterTable(String tableName, Schema keySchema, Schema valueSchema)
-            throws DbDdlException {}
+            throws DbDdlException {
+
+
+    }
 
     @Override
     public void createTable(String tableName, Schema keySchema, Schema valueSchema)

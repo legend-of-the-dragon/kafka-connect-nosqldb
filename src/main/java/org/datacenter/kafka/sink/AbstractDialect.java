@@ -4,6 +4,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.datacenter.kafka.sink.exception.DbDdlException;
+import org.datacenter.kafka.sink.exception.DbDmlException;
 
 /**
  * @author sky

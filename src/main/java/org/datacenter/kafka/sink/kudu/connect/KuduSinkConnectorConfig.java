@@ -1,9 +1,9 @@
-package org.datacenter.kafka.config.kudu;
+package org.datacenter.kafka.sink.kudu.connect;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
 import org.apache.kafka.common.config.ConfigDef.Type;
-import org.datacenter.kafka.config.AbstractConnectorConfig;
+import org.datacenter.kafka.sink.AbstractConnectorConfig;
 
 import java.util.Map;
 

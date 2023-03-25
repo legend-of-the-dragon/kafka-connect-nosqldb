@@ -13,7 +13,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.datacenter.kafka.sink;
+package org.datacenter.kafka.sink.exception;
 
 import org.apache.kafka.connect.errors.ConnectException;
 
@@ -22,6 +22,7 @@ public class DbDmlException extends ConnectException {
     public DbDmlException(String reason) {
         super(reason);
     }
+
     public DbDmlException(Throwable e) {
         super(e);
     }

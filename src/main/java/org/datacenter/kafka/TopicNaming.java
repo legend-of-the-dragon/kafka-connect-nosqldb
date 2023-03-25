@@ -1,4 +1,4 @@
-package org.datacenter.kafka.config; //
+package org.datacenter.kafka; //
 
 public final class TopicNaming {
     private final String topicReplacePrefix;

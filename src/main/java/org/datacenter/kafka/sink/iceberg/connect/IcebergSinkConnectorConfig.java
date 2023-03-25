@@ -2,7 +2,7 @@ package org.datacenter.kafka.sink.iceberg.connect;
 
 import org.apache.iceberg.TableProperties;
 import org.apache.kafka.common.config.ConfigDef;
-import org.datacenter.kafka.config.AbstractConnectorConfig;
+import org.datacenter.kafka.sink.AbstractConnectorConfig;
 
 import java.util.HashMap;
 import java.util.Map;

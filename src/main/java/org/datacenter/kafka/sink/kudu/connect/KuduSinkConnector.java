@@ -1,10 +1,10 @@
-package org.datacenter.kafka.sink.ignite;
+package org.datacenter.kafka.sink.kudu.connect;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
-import org.datacenter.kafka.config.Version;
-import org.datacenter.kafka.config.ignite.IgniteSinkConnectorConfig;
+import org.datacenter.kafka.sink.AbstractConnectorConfig;
+import org.datacenter.kafka.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,28 +13,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * IgniteSinkConnector
+ * KuduSinkConnector
  *
  * @author sky
  * @date 2022-05-10
  */
-public class GridgainSinkConnector extends SinkConnector {
+public class KuduSinkConnector extends SinkConnector {
 
-    private static final Logger log = LoggerFactory.getLogger(GridgainSinkConnector.class);
+    private static final Logger log = LoggerFactory.getLogger(KuduSinkConnector.class);
 
-    private IgniteSinkConnectorConfig sinkConfig;
+    private AbstractConnectorConfig sinkConfig;
 
     @Override
     public void start(Map<String, String> map) {
 
-        this.sinkConfig = new IgniteSinkConnectorConfig(map);
-        ElasticLimit.prometheusServer = sinkConfig.rateLimitPrometheusServer;
-        log.info("start ignite sink connector.");
+        this.sinkConfig = new KuduSinkConnectorConfig(map);
+        log.info("start kudu sink connector.");
     }
 
     @Override
     public Class<? extends Task> taskClass() {
-        return IgniteSinkTask.class;
+        return KuduSinkTask.class;
     }
 
     @Override
@@ -55,16 +54,17 @@ public class GridgainSinkConnector extends SinkConnector {
     @Override
     public void stop() {
 
-        log.info("stop ignite sink connector.");
+        log.info("stop kudu sink connector.");
     }
 
     @Override
     public ConfigDef config() {
-        return IgniteSinkConnectorConfig.configDef();
+        return KuduSinkConnectorConfig.configDef();
     }
 
     @Override
     public String version() {
+        log.info("get kudu sink connector version.");
         return Version.getVersion();
     }
 }

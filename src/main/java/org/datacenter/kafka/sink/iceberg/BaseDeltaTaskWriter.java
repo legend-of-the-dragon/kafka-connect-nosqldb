@@ -9,7 +9,7 @@ import org.apache.iceberg.io.FileAppenderFactory;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.OutputFileFactory;
 import org.apache.iceberg.types.TypeUtil;
-import org.datacenter.kafka.sink.DbDmlException;
+import org.datacenter.kafka.sink.exception.DbDmlException;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.datacenter.kafka.config;
+package org.datacenter.kafka.sink;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
