@@ -2,10 +2,7 @@ package org.datacenter.kafka.sink.iceberg;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.iceberg.CatalogUtil;
-import org.apache.iceberg.PartitionSpec;
-import org.apache.iceberg.RowDelta;
-import org.apache.iceberg.Table;
+import org.apache.iceberg.*;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -19,10 +16,13 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.datacenter.kafka.sink.*;
+import org.datacenter.kafka.sink.AbstractDialect;
+import org.datacenter.kafka.sink.SchemaTypeEnum;
+import org.datacenter.kafka.sink.SinkRecordTypeTransform;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
 import org.datacenter.kafka.sink.iceberg.connect.IcebergSinkConnectorConfig;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,26 +107,65 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
-
-        return false;
+        org.apache.iceberg.Schema newSchema = getSchema(keySchema, valueSchema);
+        Table table = getTable(tableName);
+        org.apache.iceberg.Schema oldSchema = table.schema();
+        return newSchema.sameSchema(oldSchema);
     }
 
     @Override
     public void alterTable(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
+        Table table = getTable(tableName);
+        org.apache.iceberg.Schema newSchema = getSchema(keySchema, valueSchema);
+        UpdateSchema updateSchema =
+                table.updateSchema()
+                        .unionByNameWith(newSchema)
+                        .setIdentifierFields(newSchema.identifierFieldNames());
+        org.apache.iceberg.Schema newSchemaCombined = updateSchema.apply();
 
+        // @NOTE avoid committing when there is no schema change. commit creates new commit even
+        // when there is no change!
+        if (!table.schema().sameSchema(newSchemaCombined)) {
+            log.info("Extending schema of {}", table.name());
+            updateSchema.commit();
+        }
     }
 
     @Override
     public void createTable(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
-        Map<String, Types.NestedField> schemaColumns = new HashMap<>();
-
         TableIdentifier tableIdentifier =
                 TableIdentifier.of(Namespace.of(sinkConfig.tableNamespace), tableName);
+
         Map<String, String> icebergTableConfiguration = sinkConfig.getIcebergTableConfiguration();
+        org.apache.iceberg.Schema schema = getSchema(keySchema, valueSchema);
+
+        // 分区字段 = bucket_10(实例id + 库名 + 所有主键字段)
+        // <实例id + 库名由配置决定是否需要加入主键字段>
+        // <sink默认不进行分区，需要更加复杂的分区需要手工建表>
+
+        final PartitionSpec partitionSpec = PartitionSpec.unpartitioned();
+
+        catalog.buildTable(tableIdentifier, schema)
+                .withProperties(icebergTableConfiguration)
+                .withProperty(FORMAT_VERSION, "2")
+                .withSortOrder(IcebergUtil.getIdentifierFieldsAsSortOrder(schema))
+                .withPartitionSpec(partitionSpec)
+                .create();
+
+        boolean tableExists = tableExists(tableName);
+        if (!tableExists) {
+            throw new DbDdlException("创建表之后依旧找不到表.");
+        }
+    }
+
+    @NotNull
+    private org.apache.iceberg.Schema getSchema(Schema keySchema, Schema valueSchema) {
+        Map<String, Types.NestedField> schemaColumns = new HashMap<>();
+
         org.apache.iceberg.Schema schema;
 
         int columnId = 0;
@@ -171,24 +210,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         schema =
                 new org.apache.iceberg.Schema(
                         new ArrayList<>(schemaColumns.values()), identifierFieldIds);
-
-        // 分区字段 = bucket_10(实例id + 库名 + 所有主键字段)
-        // <实例id + 库名由配置决定是否需要加入主键字段>
-        // <sink默认不进行分区，需要更加复杂的分区需要手工建表>
-
-        final PartitionSpec partitionSpec = PartitionSpec.unpartitioned();
-
-        catalog.buildTable(tableIdentifier, schema)
-                .withProperties(icebergTableConfiguration)
-                .withProperty(FORMAT_VERSION, "2")
-                .withSortOrder(IcebergUtil.getIdentifierFieldsAsSortOrder(schema))
-                .withPartitionSpec(partitionSpec)
-                .create();
-
-        boolean tableExists = tableExists(tableName);
-        if (!tableExists) {
-            throw new DbDdlException("创建表之后依旧找不到表.");
-        }
+        return schema;
     }
 
     @Override
