@@ -49,6 +49,14 @@
 | kudu.masters              |  是   | 无默认值 | kafka master ip，多个master可以用","隔开     |
 | default.partition.buckets |  否   | 5    | 自动创建kudu表的时候，主键的HashPartitions 设置的数值 |
 
+
+## iceberg 参数
+| 参数名称                      | 是否必填 | 默认值  | 说明                                   |
+|---------------------------|------|------|--------------------------------------|
+| iceberg.catalog.uri              |  是   | 无默认值 | hive metastore     |
+| iceberg.catalog.catalog-impl |  否   | org.apache.iceberg.hive.HiveCatalog    | catalog实现类 |
+| iceberg.table-default.write.format | 否 | avro | 写入iceberg的数据格式,支持parquet、orc、avro |
+
 ## 公共数据类型与kafka connect的对照关系 (注意:不在表中的数据类型暂不支持)
 | nosqldb-kafka-connect 数据类型 | kafka connect数据类型 |kafka connect 类型名称| debezium 数据类型 | mysql 数据类型 |
 |---------------------------|------|------|-------|------|
@@ -104,6 +112,22 @@
 |DATE|STRING|
 |TIME|STRING|
 |DECIMAL|DECIMAL|
+## iceberg和公共数据类型的对照关系
+| nosqldb-kafka-connect 数据类型 | iceberg 数据类型 | 
+|---------------------------|------|
+| TINYINT | Byte |
+| SHORT | Short |
+| INT | Integer |
+| LONG | Long |
+| FLOAT | FLOAT |
+| DOUBLE | Double |
+| BOOLEAN | Boolean |
+| STRING | STRING |
+| BYTES | byte[] |
+| TIMESTAMP | STRING |
+| DATE | STRING |
+| TIME | STRING |
+| DECIMAL | BigDecimal |
 # Development
 
 You can build kafka-connect-nosqldb with Maven using the standard lifecycle phases.

@@ -32,7 +32,7 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
     private static final String TABLE_WRITE_FORMAT_DOC = "数据写入格式.";
 
     public static final String CATALOGIMPL_KEY = "iceberg.catalog.catalog-impl";
-    public static final String CATALOGIMPL_DEFAULT = HADOOP_CATALOG;
+    public static final String CATALOGIMPL_DEFAULT = "org.apache.iceberg.hive.HiveCatalog";
     private static final String CATALOGIMPL_DOC =
             "Indicates if overwriting or removing existing values in the sink cache is enabled. Sink connector performs better if this flag is disabled.";
 
