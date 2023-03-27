@@ -26,7 +26,7 @@
 | message.extract      | 否    | "SCHEMA_REGISTRY" | kafka中存储的数据行的数据结构，值的选项为"SCHEMA_REGISTRY"、"DEBEZIUM"                                                                                                                           |
 | batch.size           | 否    | 1000             | 一次写数据库的最大条数。 注：批量写入数据库有助于提供效率，但是太高了可能会导致可能奇葩的故障出现.kudu超过有可能会导致buffer不够，还得调整buffer的大小.                                                                                                                             |
 | delete.enabled       | 否    | true             | delete的操作是否启用，默认true.                                                                                                                             |
-| allow-record-fields-less-than-table-fields       | 否    | false             | 是否允许记录比表字段少，默认false.                                                                                                                             |
+| allow-record-fields-less-than-table-fields       | 否    | false             | 是否允许记录比表字段少，默认false. 注：iceberg不适用.                                                                                                                              |
 | ignore-null-values | 否 | false | 是否允许record中的空字段覆盖数据库中的数据，默认允许，以record输入的为准. |
 
 ## ignite 参数
