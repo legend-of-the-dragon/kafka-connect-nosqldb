@@ -61,7 +61,7 @@ public class AbstractConnectorConfig extends AbstractConfig {
             "允许record的数据字段比目标表的字段少,默认允许,就是说只要不新增字段,可以只插入或者更新表中的一部分字段.";
 
     public static final String IGNORE_NULL_VALUES_KEY = "ignore-null-values";
-    public static final Boolean IGNORE_NULL_VALUES_DEFAULT = false;
+    public static final Boolean IGNORE_NULL_VALUES_DEFAULT = true;
     public static final String IGNORE_NULL_VALUES_DOC =
             "是否允许record中的空字段覆盖数据库中的数据，默认允许，以record输入的为准.";
 
