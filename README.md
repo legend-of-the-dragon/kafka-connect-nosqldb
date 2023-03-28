@@ -57,6 +57,7 @@
 | iceberg.catalog.uri              |  是   | 无默认值 | hive metastore     |
 | iceberg.catalog.catalog-impl |  否   | org.apache.iceberg.hive.HiveCatalog    | catalog实现类 |
 | iceberg.table-default.write.format | 否 | avro | 写入iceberg的数据格式,支持parquet、orc、avro |
+| table.namespace | 否 | default | 写入iceberg的库名 |
 
 ## 公共数据类型与kafka connect的对照关系 (注意:不在表中的数据类型暂不支持)
 | nosqldb-kafka-connect 数据类型 | kafka connect数据类型 |kafka connect 类型名称| debezium 数据类型 | mysql 数据类型 |
