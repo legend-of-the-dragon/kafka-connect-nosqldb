@@ -1,4 +1,4 @@
-package org.datacenter.kafka.sink.iceberg.connect;
+package org.datacenter.kafka.sink.iceberg;
 
 import org.apache.iceberg.TableProperties;
 import org.apache.kafka.common.config.ConfigDef;

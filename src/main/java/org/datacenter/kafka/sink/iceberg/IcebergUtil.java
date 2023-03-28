@@ -8,20 +8,16 @@
 
 package org.datacenter.kafka.sink.iceberg;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Ints;
 import org.apache.iceberg.*;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.GenericAppenderFactory;
 import org.apache.iceberg.exceptions.NoSuchTableException;
-import org.apache.kafka.connect.errors.ConnectException;
-import org.datacenter.kafka.sink.iceberg.connect.IcebergSinkConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.apache.iceberg.TableProperties.*;
 

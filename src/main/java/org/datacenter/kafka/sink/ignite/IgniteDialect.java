@@ -18,7 +18,6 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.datacenter.kafka.sink.*;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
-import org.datacenter.kafka.sink.ignite.connect.IgniteSinkConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

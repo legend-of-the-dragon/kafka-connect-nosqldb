@@ -1,4 +1,4 @@
-package org.datacenter.kafka.sink.iceberg.connect;
+package org.datacenter.kafka.sink.iceberg;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;

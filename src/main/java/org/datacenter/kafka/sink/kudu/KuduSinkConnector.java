@@ -1,4 +1,4 @@
-package org.datacenter.kafka.sink.kudu.connect;
+package org.datacenter.kafka.sink.kudu;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;

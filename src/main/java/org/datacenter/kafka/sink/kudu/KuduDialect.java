@@ -15,7 +15,6 @@ import org.apache.kudu.util.DecimalUtil;
 import org.datacenter.kafka.sink.*;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
-import org.datacenter.kafka.sink.kudu.connect.KuduSinkConnectorConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

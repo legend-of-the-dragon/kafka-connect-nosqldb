@@ -21,7 +21,6 @@ import org.datacenter.kafka.sink.SchemaTypeEnum;
 import org.datacenter.kafka.sink.SinkRecordTypeTransform;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
-import org.datacenter.kafka.sink.iceberg.connect.IcebergSinkConnectorConfig;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,12 +52,12 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     public IcebergDialect(IcebergSinkConnectorConfig sinkConfig, int taskId) {
 
         this.sinkConfig = sinkConfig;
-        this.catalog = create(sinkConfig);
+        this.catalog = getCatalog(sinkConfig);
         this.writerFactory = new IcebergTableWriterFactory(sinkConfig);
         this.taskId = taskId;
     }
 
-    public static Catalog create(IcebergSinkConnectorConfig sinkConfig) {
+    public static Catalog getCatalog(IcebergSinkConnectorConfig sinkConfig) {
         Configuration hadoopConfig = new Configuration();
         if (sinkConfig.catalogImpl.equals(ICEBERG_CATALOG_HADOOP)) {
             String hdfsConfigFile = sinkConfig.hdfsConfigFile;

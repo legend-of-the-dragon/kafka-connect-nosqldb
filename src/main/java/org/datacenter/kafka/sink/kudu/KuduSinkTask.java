@@ -1,8 +1,7 @@
-package org.datacenter.kafka.sink.kudu.connect;
+package org.datacenter.kafka.sink.kudu;
 
 import org.datacenter.kafka.Version;
 import org.datacenter.kafka.sink.AbstractSinkTask;
-import org.datacenter.kafka.sink.kudu.KuduDialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

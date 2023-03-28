@@ -1,4 +1,4 @@
-package org.datacenter.kafka.sink.ignite.connect;
+package org.datacenter.kafka.sink.ignite;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;

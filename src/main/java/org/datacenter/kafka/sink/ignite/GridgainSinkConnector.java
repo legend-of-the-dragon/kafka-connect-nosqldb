@@ -1,10 +1,9 @@
-package org.datacenter.kafka.sink.ignite.connect;
+package org.datacenter.kafka.sink.ignite;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
 import org.datacenter.kafka.Version;
-import org.datacenter.kafka.sink.ignite.ElasticLimit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

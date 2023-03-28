@@ -1,8 +1,7 @@
-package org.datacenter.kafka.sink.iceberg.connect;
+package org.datacenter.kafka.sink.iceberg;
 
 import org.datacenter.kafka.Version;
 import org.datacenter.kafka.sink.AbstractSinkTask;
-import org.datacenter.kafka.sink.iceberg.IcebergDialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
