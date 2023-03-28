@@ -109,7 +109,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         org.apache.iceberg.Schema newSchema = getSchema(keySchema, valueSchema);
         Table table = getTable(tableName);
         org.apache.iceberg.Schema oldSchema = table.schema();
-        return newSchema.sameSchema(oldSchema);
+        return !newSchema.sameSchema(oldSchema);
     }
 
     @Override
@@ -178,6 +178,41 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
             String fieldDoc = field.schema().doc();
             Type.PrimitiveType dialectSchemaType =
                     getDialectSchemaType(fieldType, columnSchemaName);
+
+            // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
+            if (dialectSchemaType.equals(Types.DecimalType.of(10, 10))) {
+
+                int precision = 20;
+                int scale = 4;
+                Map<String, String> schemaParameters = field.schema().parameters();
+                if (schemaParameters != null) {
+                    String precisionString = schemaParameters.get("connect.decimal.precision");
+                    String scaleString = schemaParameters.get("scale");
+
+                    if (precisionString != null) {
+                        try {
+                            precision = Integer.parseInt(precisionString);
+                        } catch (Exception e) {
+                            log.error(
+                                    "fieldName:{},处理decimal字段类型的时候，precision获取错误。precisionString:{}",
+                                    fieldName,
+                                    precisionString);
+                        }
+                    }
+                    if (scaleString != null) {
+                        try {
+                            scale = Integer.parseInt(scaleString);
+                        } catch (Exception e) {
+                            log.error(
+                                    "fieldName:{},处理decimal字段类型的时候，scale获取错误。scaleString:{}",
+                                    fieldName,
+                                    scaleString);
+                        }
+                    }
+                }
+                dialectSchemaType = Types.DecimalType.of(precision, scale);
+            }
+
             schemaColumns.put(
                     fieldName,
                     Types.NestedField.optional(columnId, fieldName, dialectSchemaType, fieldDoc));
@@ -222,7 +257,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
 
         switch (columnSchemaTypeEnum) {
             case DECIMAL:
-                icebergSchemaType = Types.StringType.get();
+                icebergSchemaType = Types.DecimalType.of(10, 10);
                 break;
             case DATE:
             case TIME:
@@ -230,7 +265,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
                 icebergSchemaType = Types.StringType.get();
                 break;
             case TIMESTAMP:
-                icebergSchemaType = Types.LongType.get();
+                icebergSchemaType = Types.TimestampType.withZone();
                 break;
             case TINYINT:
             case SHORT:
