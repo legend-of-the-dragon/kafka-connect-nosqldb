@@ -30,6 +30,8 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 import static org.apache.iceberg.CatalogUtil.ICEBERG_CATALOG_HADOOP;
@@ -431,7 +433,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
                         SinkRecordTypeTransform.getTinyint(
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (tinyintValue != null) {
-                    icebergRecord.setField(columnName, tinyintValue);
+                    icebergRecord.setField(columnName, tinyintValue.intValue());
                 } else if (sinkConfig.ignoreNullValues) {
                     icebergRecord.setField(columnName, null);
                 }
@@ -441,7 +443,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
                         SinkRecordTypeTransform.getShort(
                                 columnName, columnSchemaName, columnType, valueStruct);
                 if (shortValue != null) {
-                    icebergRecord.setField(columnName, shortValue);
+                    icebergRecord.setField(columnName, shortValue.intValue());
                 } else if (sinkConfig.ignoreNullValues) {
                     icebergRecord.setField(columnName, null);
                 }
@@ -530,8 +532,12 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
                 Timestamp timestampValue =
                         SinkRecordTypeTransform.getTimestamp(
                                 columnName, columnSchemaName, columnType, valueStruct);
+
                 if (timestampValue != null) {
-                    icebergRecord.setField(columnName, timestampValue);
+                    OffsetDateTime offsetDateTime =
+                            OffsetDateTime.ofInstant(
+                                    timestampValue.toInstant(), ZoneId.systemDefault());
+                    icebergRecord.setField(columnName, offsetDateTime);
                 } else if (sinkConfig.ignoreNullValues) {
                     icebergRecord.setField(columnName, null);
                 }
