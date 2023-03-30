@@ -139,6 +139,8 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         if (!table.schema().sameSchema(newSchemaCombined)) {
             log.info("Extending schema of {}", table.name());
             updateSchema.commit();
+            tableCache.remove(tableName);
+            tableCache.put(tableName, getTable(tableName));
         }
     }
 
@@ -168,6 +170,8 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         boolean tableExists = tableExists(tableName);
         if (!tableExists) {
             throw new DbDdlException("创建表之后依旧找不到表.");
+        } else {
+            tableCache.put(tableName, getTable(tableName));
         }
     }
 
