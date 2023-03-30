@@ -15,15 +15,16 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.datacenter.kafka.sink.*;
+import org.datacenter.kafka.sink.AbstractDialect;
+import org.datacenter.kafka.sink.AbstractSinkTask;
+import org.datacenter.kafka.sink.SchemaTypeEnum;
+import org.datacenter.kafka.sink.SinkRecordTypeTransform;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageExtract;
 
@@ -147,6 +148,12 @@ public class IgniteDialect
 
         // select cache_name from sys.tables where table_name='';
         return true;
+    }
+
+    @Override
+    public List<String> getKeyNames(String tableName) {
+
+        return new ArrayList<>();
     }
 
     @Override

@@ -8,11 +8,11 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.datacenter.kafka.TopicNaming;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
-import org.datacenter.kafka.util.SinkRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
 
@@ -63,6 +63,9 @@ public abstract class AbstractSinkTask extends SinkTask {
             for (SinkRecord sinkRecord : records) {
 
                 String tableName = this.getTableName(sinkRecord.topic());
+                if (sinkRecord.key() == null) {
+                    throw new DbDmlException("table:" + tableName + ",sinkRecord.key() == null");
+                }
 
                 boolean apply = true;
                 Schema oldKeySchema = null;
@@ -76,8 +79,25 @@ public abstract class AbstractSinkTask extends SinkTask {
 
                 try {
                     if (sinkRecord.value() == null) {
+
+                        // 判断缓存中是否存在之前的表结构
+                        if (oldValueSchema == null) {
+                            // 如果不存在表结构缓存，检查一下是否存在表
+                            boolean tableExists = dialect.tableExists(tableName);
+
+                            // 如果表也不存在，说明是表不存在的情况下，第一条数据就是delete，这种暂时不支持处理，则跳过这一条数据的处理
+                            if (!tableExists) {
+                                log.error(
+                                        "这种情况属于初始化的时候，但是第一条记录是删除,跳过当前record.{},key:{}",
+                                        tableName,
+                                        sinkRecord.key());
+                                writeCount++;
+                                continue;
+                            }
+                        }
+
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())) {
-                            schemaChanged(tableName, oldValueSchema, sinkRecord);
+                            schemaChanged(tableName, sinkRecord);
                         }
 
                         if (sinkConfig.deleteEnabled) {
@@ -86,7 +106,7 @@ public abstract class AbstractSinkTask extends SinkTask {
                     } else {
                         if (!Objects.equals(oldKeySchema, sinkRecord.keySchema())
                                 || !Objects.equals(oldValueSchema, sinkRecord.valueSchema())) {
-                            schemaChanged(tableName, sinkRecord.valueSchema(), sinkRecord);
+                            schemaChanged(tableName, sinkRecord);
                         }
 
                         apply = dialect.applyUpsertRecord(tableName, sinkRecord);
@@ -143,67 +163,77 @@ public abstract class AbstractSinkTask extends SinkTask {
      * 1、创建表 2、修改表结构 3、表结构未变动(初始化)，该情况只要把缓存的表结构赋值即可。
      *
      * @param tableName
-     * @param oldValueSchema
      * @param sinkRecord
      */
-    private void schemaChanged(String tableName, Schema oldValueSchema, SinkRecord sinkRecord) {
+    private void schemaChanged(String tableName, SinkRecord sinkRecord) {
 
         Schema newKeySchema = sinkRecord.keySchema();
+        Schema newValueSchema = sinkRecord.valueSchema();
 
-        Schema newValueSchema = null;
         // 如果oldValueSchema，意味着还没有初始化或者上一次是delete dml语句，
         // alter和create table的时候只能先使用sinkRecord.valueSchema()
         // 如果sinkRecord.valueSchema()，意味着是delete dml语句，alter和create table的时候只能先使用oldValueSchema
-        if (sinkRecord.valueSchema() == null) {
-            if (oldValueSchema != null) {
-                newValueSchema = oldValueSchema;
+        boolean tableExists = dialect.tableExists(tableName);
+        if (newValueSchema == null) {
+            if (tableExists) {
+                // 对比sinkRecord中的key与目标库中的key，如果一致，则不用修改表，继续执行delete操作，如果发生变化则直接报异常.
+                List<String> newKeyNames =
+                        sinkRecord.keySchema().fields().stream()
+                                .map(Field::name)
+                                .collect(Collectors.toList());
+                List<String> oldKeyNames = dialect.getKeyNames(tableName);
+                boolean equals = true;
+                if (newKeyNames.size() == oldKeyNames.size()) {
+                    for (String newKeyName : newKeyNames) {
+                        if (!oldKeyNames.contains(newKeyName)) {
+                            equals = false;
+                            break;
+                        }
+                    }
+                } else {
+                    equals = false;
+                }
+
+                if (equals) {
+                    return;
+                } else {
+                    throw new DbDmlException("表:" + tableName + "在delete的时候修改了主键字段，这是不允许的动作.");
+                }
             } else {
-                log.error(
-                        "{} sink,这种情况属于初始化的时候，但是第一条记录是删除.{},keySchema:{},valueSchema:{}",
-                        getDialectName(),
-                        sinkRecord.toString(),
-                        SinkRecordUtil.schema2String(sinkRecord.keySchema()),
-                        SinkRecordUtil.schema2String(sinkRecord.valueSchema()));
+                throw new DbDmlException("表:" + tableName + "不存在且表的第一条数据是delete.");
             }
         } else {
-            newValueSchema = sinkRecord.valueSchema();
-        }
 
-        boolean tableExists = dialect.tableExists(tableName);
+            if (tableExists) {
 
-        if (tableExists) {
+                // 对比schemaRegister中的schema和DB中的schema的差异，如果没有差异，加载即可，如果有差异，变更表结构
+                boolean needChangeTableStructure =
+                        dialect.needChangeTableStructure(tableName, newKeySchema, newValueSchema);
+                if (needChangeTableStructure) {
 
-            // 对比schemaRegister中的schema和DB中的schema的差异，如果没有差异，加载即可，如果有差异，变更表结构
-            boolean needChangeTableStructure =
-                    dialect.needChangeTableStructure(tableName, newKeySchema, newValueSchema);
-            if (needChangeTableStructure) {
+                    flushAll();
+
+                    try {
+                        dialect.alterTable(tableName, newKeySchema, newValueSchema);
+                    } catch (Throwable e) {
+                        log.error("{} sink alterTable error:{}", getDialectName(), sinkRecord, e);
+                        throw new DbDdlException(e);
+                    }
+                }
+            } else {
 
                 flushAll();
-
                 try {
-                    dialect.alterTable(tableName, newKeySchema, newValueSchema);
+                    dialect.createTable(tableName, newKeySchema, newValueSchema);
                 } catch (Throwable e) {
                     log.error(
-                            "{} sink alterTable error:{}",
+                            "{} sink createTable error.keySchema:{},valueSchema:{}",
                             getDialectName(),
-                            sinkRecord.toString(),
+                            schema2String(sinkRecord.keySchema()),
+                            schema2String(sinkRecord.valueSchema()),
                             e);
                     throw new DbDdlException(e);
                 }
-            }
-        } else {
-
-            flushAll();
-            try {
-                dialect.createTable(tableName, newKeySchema, newValueSchema);
-            } catch (Throwable e) {
-                log.error(
-                        "{} sink createTable error.keySchema:{},valueSchema:{}",
-                        getDialectName(),
-                        schema2String(sinkRecord.keySchema()),
-                        schema2String(sinkRecord.valueSchema()),
-                        e);
-                throw new DbDdlException(e);
             }
         }
 

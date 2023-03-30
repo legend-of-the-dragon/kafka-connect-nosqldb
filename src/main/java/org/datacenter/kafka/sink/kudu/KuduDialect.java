@@ -12,7 +12,9 @@ import org.apache.kudu.ColumnTypeAttributes;
 import org.apache.kudu.Type;
 import org.apache.kudu.client.*;
 import org.apache.kudu.util.DecimalUtil;
-import org.datacenter.kafka.sink.*;
+import org.datacenter.kafka.sink.AbstractDialect;
+import org.datacenter.kafka.sink.SchemaTypeEnum;
+import org.datacenter.kafka.sink.SinkRecordTypeTransform;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageExtract;
 import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
@@ -109,6 +112,15 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             throw new DbDdlException("获取kudu表异常.", e);
         }
         return kuduTable;
+    }
+    @Override
+    public List<String> getKeyNames(String tableName) {
+
+        KuduTable table = getTable(tableName);
+
+        return table.getSchema().getPrimaryKeyColumns().stream()
+                .map(ColumnSchema::getName)
+                .collect(Collectors.toList());
     }
 
     @Override

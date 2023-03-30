@@ -51,6 +51,9 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     private final IcebergTableWriterFactory writerFactory;
     private final int taskId;
 
+    private final Map<String, Boolean> tableExistsCache = new HashMap<>();
+    private final Map<String, Table> tableCache = new HashMap<>();
+
     public IcebergDialect(IcebergSinkConnectorConfig sinkConfig, int taskId) {
 
         this.sinkConfig = sinkConfig;
@@ -73,9 +76,6 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         return CatalogUtil.buildIcebergCatalog(
                 sinkConfig.catalogName, catalogConfiguration, hadoopConfig);
     }
-
-    Map<String, Boolean> tableExistsCache = new HashMap<>();
-    private final Map<String, Table> tableCache = new HashMap<>();
 
     @Override
     public boolean tableExists(String tableName) throws DbDdlException {
@@ -102,6 +102,14 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
             tableCache.put(tableName, table);
         }
         return table;
+    }
+
+    @Override
+    public List<String> getKeyNames(String tableName) {
+
+        Table table = getTable(tableName);
+
+        return new ArrayList<>(table.schema().identifierFieldNames());
     }
 
     @Override
@@ -360,6 +368,16 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     @Override
     public void flush() throws DbDmlException {
 
+        flushAndClose();
+    }
+
+    @Override
+    public void stop() throws ConnectException {
+
+        flushAndClose();
+    }
+
+    private void flushAndClose() {
         Set<String> tableNames = taskWriterCache.keySet();
         for (String tableName : tableNames) {
 
@@ -371,37 +389,13 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
                 throw new DbDmlException("iceberg flush 失败.", e);
             }
 
-            taskWriterCache.remove(tableName);
-
             Table icebergTable = getTable(tableName);
             RowDelta rowDelta = icebergTable.newRowDelta();
             Arrays.stream(result.dataFiles()).forEach(rowDelta::addRows);
             Arrays.stream(result.deleteFiles()).forEach(rowDelta::addDeletes);
             rowDelta.commit();
         }
-    }
-
-    @Override
-    public void stop() throws ConnectException {
-
-        Set<String> tableNames = taskWriterCache.keySet();
-        for (String tableName : tableNames) {
-
-            TaskWriter<Record> taskWriter = getTaskWriter(tableName);
-            WriteResult result;
-            try {
-                taskWriter.close();
-                result = taskWriter.complete();
-            } catch (IOException e) {
-                throw new DbDmlException("flush 失败.", e);
-            }
-
-            Table icebergTable = getTable(tableName);
-            RowDelta rowDelta = icebergTable.newRowDelta();
-            Arrays.stream(result.dataFiles()).forEach(rowDelta::addRows);
-            Arrays.stream(result.deleteFiles()).forEach(rowDelta::addDeletes);
-            rowDelta.commit();
-        }
+        taskWriterCache.clear();
     }
 
     private void addRowValues(

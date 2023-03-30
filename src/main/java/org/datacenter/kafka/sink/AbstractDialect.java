@@ -7,6 +7,8 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
 
+import java.util.List;
+
 /**
  * @author sky
  * @date 2022-05-24
@@ -17,6 +19,8 @@ public abstract class AbstractDialect<SinkTable, SinkDataType> {
     public abstract boolean tableExists(String tableName) throws DbDdlException;
 
     public abstract SinkTable getTable(String tableName) throws DbDdlException;
+
+    public abstract List<String> getKeyNames(String tableName);
 
     public abstract boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException;
