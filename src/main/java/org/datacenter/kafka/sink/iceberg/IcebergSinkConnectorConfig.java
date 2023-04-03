@@ -143,39 +143,62 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
     public final int parquetBatchSizeInBytes;
 
     public String catalogName() {
-        return this.getString(CATALOGNAME_KEY);
+        String cataLogName = this.getString(CATALOGNAME_KEY);
+        this.properties.put(CATALOGNAME_KEY, cataLogName);
+        return cataLogName;
     }
 
     public String tableNamespace() {
-        return this.getString(TABLE_NAMESPACE_KEY);
+        String tableNamespace = this.getString(TABLE_NAMESPACE_KEY);
+        this.properties.put(TABLE_NAMESPACE_KEY, tableNamespace);
+        return tableNamespace;
     }
 
     public String tableWriteFormat() {
-        return this.getString(TABLE_WRITE_FORMAT_KEY);
+        String tableWriteFormat = this.getString(TABLE_WRITE_FORMAT_KEY);
+        this.properties.put(TABLE_WRITE_FORMAT_KEY, tableWriteFormat);
+        return tableWriteFormat;
     }
 
     public String catalogImpl() {
-        return this.getString(CATALOGIMPL_KEY);
+        String catalogImpl = this.getString(CATALOGIMPL_KEY);
+        this.properties.put(CATALOGIMPL_KEY, catalogImpl);
+        return catalogImpl;
     }
 
     public String hdfsConfigFile() {
-        return this.getString(HDFS_CONFIG_FILE_KEY);
+        String hdfsConfigFile = this.getString(HDFS_CONFIG_FILE_KEY);
+        if (hdfsConfigFile != null) {
+            this.properties.put(HDFS_CONFIG_FILE_KEY, hdfsConfigFile);
+        }
+        return hdfsConfigFile;
     }
 
     public String warehouse() {
-        return this.getString(WAREHOUSE_KEY);
+        String warehouse = this.getString(WAREHOUSE_KEY);
+        if (warehouse != null) {
+            this.properties.put(WAREHOUSE_KEY, warehouse);
+        }
+        return warehouse;
     }
 
     public boolean isTableAutoCreate() {
-        return this.getBoolean(TABLE_AUTO_CREATE_KEY);
+        Boolean isTableAutoCreate = this.getBoolean(TABLE_AUTO_CREATE_KEY);
+        this.properties.put(TABLE_AUTO_CREATE_KEY, isTableAutoCreate.toString());
+        return isTableAutoCreate;
     }
 
     public String getTablePrefix() {
-        return this.getString(TABLE_PREFIX_KEY);
+        String getTablePrefix = this.getString(TABLE_PREFIX_KEY);
+        this.properties.put(TABLE_PREFIX_KEY, getTablePrefix);
+        return getTablePrefix;
     }
 
     public int parquetBatchSizeInBytes() {
-        return this.getInt(TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_KEY);
+        Integer parquetBatchSizeInBytes = this.getInt(TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_KEY);
+        this.properties.put(
+                TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_KEY, parquetBatchSizeInBytes.toString());
+        return parquetBatchSizeInBytes;
     }
 
     public static final String ICEBERG_CATALOG_PREFIX = "iceberg.catalog.";
@@ -198,10 +221,7 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
         Map<String, String> config = new HashMap<>();
         properties.keySet().stream()
                 .filter(key -> key.startsWith(prefix))
-                .forEach(
-                        key -> {
-                            config.put(key.substring(prefix.length()), properties.get(key));
-                        });
+                .forEach(key -> config.put(key.substring(prefix.length()), properties.get(key)));
         return config;
     }
 }
