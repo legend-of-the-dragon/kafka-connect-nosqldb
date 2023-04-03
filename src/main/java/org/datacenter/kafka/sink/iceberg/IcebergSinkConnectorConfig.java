@@ -27,7 +27,7 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
     public static final String TABLE_NAMESPACE_DEFAULT = "default";
     private static final String TABLE_NAMESPACE_DOC = "iceberg的表空间名称.";
 
-    public static final String TABLE_WRITE_FORMAT_KEY = "iceberg.table-default.write.format";
+    public static final String TABLE_WRITE_FORMAT_KEY = "iceberg.table-default.write.format.default";
     public static final String TABLE_WRITE_FORMAT_DEFAULT = "avro";
     private static final String TABLE_WRITE_FORMAT_DOC = "数据写入格式.";
 

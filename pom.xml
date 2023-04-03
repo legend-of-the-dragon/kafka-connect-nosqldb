@@ -21,7 +21,7 @@
     <groupId>io.datacenter</groupId>
     <artifactId>nosqldb-kafka-connect</artifactId>
     <packaging>jar</packaging>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <name>nosqldb-kafka-connect</name>
 
     <properties>
@@ -200,6 +200,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.iceberg</groupId>
+            <artifactId>iceberg-orc</artifactId>
+            <version>${iceberg.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.iceberg</groupId>
             <artifactId>iceberg-common</artifactId>
             <version>${iceberg.version}</version>
         </dependency>
@@ -218,10 +223,6 @@
             <artifactId>hive-standalone-metastore</artifactId>
             <version>3.1.3</version>
             <exclusions>
-                <exclusion>
-                    <artifactId>orc-core</artifactId>
-                    <groupId>org.apache.orc</groupId>
-                </exclusion>
                 <exclusion>
                     <artifactId>dropwizard-metrics-hadoop-metrics2-reporter</artifactId>
                     <groupId>com.github.joshelser</groupId>
