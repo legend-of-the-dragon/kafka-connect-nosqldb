@@ -25,16 +25,16 @@
     <name>nosqldb-kafka-connect</name>
 
     <properties>
-        <java.version>11</java.version>
-        <kafka-connect.version>7.0.0-ccs</kafka-connect.version>
+        <java.version>17</java.version>
+        <kafka-connect.version>3.4.0</kafka-connect.version>
         <gridgain.version>8.8.16</gridgain.version>
         <kudu.version>1.16.0</kudu.version>
         <iceberg.version>1.2.0</iceberg.version>
         <hadoop.version>3.2.4</hadoop.version>
-        <lombok.version>1.18.22</lombok.version>
-        <log4j2.version>2.17.2</log4j2.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <netty.version>4.1.77.Final</netty.version>
+        <lombok.version>1.18.26</lombok.version>
+        <log4j2.version>2.20.0</log4j2.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <netty.version>4.1.90.Final</netty.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.package.home>target/${project.artifactId}-${project.version}-package</project.package.home>
     </properties>
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
+            <version>${slf4j.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -236,12 +236,12 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
-            <version>3.2.4</version>
+            <version>${hadoop.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>3.2.4</version>
+            <version>${hadoop.version}</version>
         </dependency>
         <!--<dependency>
             <groupId>org.apache.iceberg</groupId>
