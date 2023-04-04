@@ -62,9 +62,7 @@ public class IcebergUtil {
         return sob.build();
     }
 
-
-    public static Table loadIcebergTable(
-            Catalog icebergCatalog, TableIdentifier tableId) {
+    public static Table loadIcebergTable(Catalog icebergCatalog, TableIdentifier tableId) {
         try {
             return icebergCatalog.loadTable(tableId);
         } catch (NoSuchTableException e) {
@@ -83,10 +81,11 @@ public class IcebergUtil {
 
     public static GenericAppenderFactory getTableAppender(Table icebergTable) {
         return new GenericAppenderFactory(
-                icebergTable.schema(),
-                icebergTable.spec(),
-                Ints.toArray(icebergTable.schema().identifierFieldIds()),
-                icebergTable.schema(),
-                null);
+                        icebergTable.schema(),
+                        icebergTable.spec(),
+                        Ints.toArray(icebergTable.schema().identifierFieldIds()),
+                        icebergTable.schema(),
+                        null)
+                .setAll(icebergTable.properties());
     }
 }

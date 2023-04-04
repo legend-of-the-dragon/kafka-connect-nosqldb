@@ -55,7 +55,7 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
     public static final String TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_KEY =
             "iceberg.table-default.parquetBatchSize.Bytes";
     public static final int TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_DEFAULT =
-            TableProperties.PARQUET_ROW_GROUP_SIZE_BYTES_DEFAULT;
+            TableProperties.PARQUET_PAGE_SIZE_BYTES_DEFAULT;
     private static final String TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_DOC =
             "如果iceberg表使用parquet格式，一次读取的字节数.";
 
