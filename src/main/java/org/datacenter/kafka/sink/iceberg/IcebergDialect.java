@@ -35,6 +35,7 @@ import java.time.ZoneId;
 import java.util.*;
 
 import static org.apache.iceberg.CatalogUtil.ICEBERG_CATALOG_HADOOP;
+import static org.apache.iceberg.CatalogUtil.ICEBERG_CATALOG_HIVE;
 import static org.apache.iceberg.TableProperties.FORMAT_VERSION;
 
 /**
@@ -64,13 +65,16 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
 
     public static Catalog getCatalog(IcebergSinkConnectorConfig sinkConfig) {
         Configuration hadoopConfig = new Configuration();
-        if (sinkConfig.catalogImpl.equals(ICEBERG_CATALOG_HADOOP)) {
+        if (sinkConfig.catalogImpl.equals(ICEBERG_CATALOG_HIVE)
+                || sinkConfig.catalogImpl.equals(ICEBERG_CATALOG_HADOOP)) {
             String hdfsConfigFile = sinkConfig.hdfsConfigFile;
-            String[] paths = hdfsConfigFile.split(",");
-            for (String path : paths) {
-                hadoopConfig.addResource(path);
+            if (hdfsConfigFile != null) {
+                String[] paths = hdfsConfigFile.split(",");
+                Configuration resourcesConfiguration = ConfigurationUtils.readConfiguration(paths);
+                ConfigurationUtils.copy(resourcesConfiguration, hadoopConfig);
             }
         }
+
         Map<String, String> catalogConfiguration = sinkConfig.getIcebergCatalogConfiguration();
         catalogConfiguration.forEach(hadoopConfig::set);
         return CatalogUtil.buildIcebergCatalog(
