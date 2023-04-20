@@ -134,8 +134,10 @@ public abstract class AbstractSinkTask extends SinkTask {
                 }
             }
             flushAll();
+            context.requestCommit();
             log.info("{} sink write {} records. ", getDialectName(), recordsCount);
         }
+
     }
 
     private String ConnectSchemaToString(Schema connectSchema) {
