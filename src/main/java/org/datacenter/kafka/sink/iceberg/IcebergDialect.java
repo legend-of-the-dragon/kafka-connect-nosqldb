@@ -7,6 +7,8 @@ import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.Record;
+import org.apache.iceberg.exceptions.AlreadyExistsException;
+import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.io.TaskWriter;
 import org.apache.iceberg.io.WriteResult;
 import org.apache.iceberg.types.Type;
@@ -33,6 +35,7 @@ import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.apache.iceberg.CatalogUtil.ICEBERG_CATALOG_HADOOP;
 import static org.apache.iceberg.CatalogUtil.ICEBERG_CATALOG_HIVE;
@@ -46,6 +49,7 @@ import static org.apache.iceberg.TableProperties.FORMAT_VERSION;
 public class IcebergDialect extends AbstractDialect<Table, Type> {
 
     private static final Logger log = LoggerFactory.getLogger(IcebergDialect.class);
+    public static final Types.DecimalType DECIMAL_TYPE = Types.DecimalType.of(10, 10);
 
     private final IcebergSinkConnectorConfig sinkConfig;
     private final Catalog catalog;
@@ -96,6 +100,14 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         return tableExists;
     }
 
+    @Override
+    public List<String> getKeyNames(String tableName) {
+
+        Table table = getTable(tableName);
+
+        return new ArrayList<>(table.schema().identifierFieldNames());
+    }
+
     public Table getTable(String tableName) throws DbDdlException {
 
         TableIdentifier tableId =
@@ -109,21 +121,39 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
     }
 
     @Override
-    public List<String> getKeyNames(String tableName) {
-
-        Table table = getTable(tableName);
-
-        return new ArrayList<>(table.schema().identifierFieldNames());
-    }
-
-    @Override
     public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
         org.apache.iceberg.Schema newSchema = getSchema(keySchema, valueSchema);
         Table table = getTable(tableName);
         org.apache.iceberg.Schema oldSchema = table.schema();
-        return !newSchema.sameSchema(oldSchema);
+        Set<String> newKeyNames = newSchema.identifierFieldNames();
+        List<String> newColumnNames =
+                newSchema.columns().stream()
+                        .map(Types.NestedField::name)
+                        .collect(Collectors.toList());
+        Set<String> oldKeyNames = oldSchema.identifierFieldNames();
+        List<String> oldColumnNames =
+                oldSchema.columns().stream()
+                        .map(Types.NestedField::name)
+                        .collect(Collectors.toList());
+
+        if (newKeyNames.size() != oldKeyNames.size()) {
+            return true;
+        }
+        for (String newKeyName : newKeyNames) {
+            if (!oldKeyNames.contains(newKeyName)) {
+                return true;
+            }
+        }
+
+        for (String newColumnName : newColumnNames) {
+            if (!oldColumnNames.contains(newColumnName)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -164,12 +194,19 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
 
         final PartitionSpec partitionSpec = PartitionSpec.unpartitioned();
 
-        catalog.buildTable(tableIdentifier, schema)
-                .withProperties(icebergTableConfiguration)
-                .withProperty(FORMAT_VERSION, "2")
-                .withSortOrder(IcebergUtil.getIdentifierFieldsAsSortOrder(schema))
-                .withPartitionSpec(partitionSpec)
-                .create();
+        try {
+
+            catalog.buildTable(tableIdentifier, schema)
+                    .withProperties(icebergTableConfiguration)
+                    .withProperty(FORMAT_VERSION, "2")
+                    .withSortOrder(IcebergUtil.getIdentifierFieldsAsSortOrder(schema))
+                    .withPartitionSpec(partitionSpec)
+                    .create();
+        } catch (AlreadyExistsException e) {
+            log.warn("table already exists:{}", tableName, e);
+        } catch (Exception e) {
+            throw new DbDdlException(e);
+        }
 
         boolean tableExists = tableExists(tableName);
         if (!tableExists) {
@@ -197,8 +234,19 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
             Type.PrimitiveType dialectSchemaType =
                     getDialectSchemaType(fieldType, columnSchemaName);
 
+            if (dialectSchemaType == null) {
+                throw new DbDmlException(
+                        "dialectSchemaType is null.keySchemaName="
+                                + keySchema.name()
+                                + ",fieldName="
+                                + fieldName
+                                + ",columnSchemaName="
+                                + columnSchemaName
+                                + ",fieldType="
+                                + fieldType);
+            }
             // DECIMAL 必须要通过typeAttributes指定位数，不然会空指针报错
-            if (dialectSchemaType.equals(Types.DecimalType.of(10, 10))) {
+            if (dialectSchemaType.equals(DECIMAL_TYPE)) {
 
                 int precision = 20;
                 int scale = 4;
@@ -317,9 +365,20 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         org.apache.iceberg.Schema schema = table.schema();
         org.datacenter.kafka.sink.iceberg.SinkRecord icebergRecord =
                 org.datacenter.kafka.sink.iceberg.SinkRecord.create(schema);
+        List<String> columnNames =
+                schema.columns().stream().map(Types.NestedField::name).collect(Collectors.toList());
+
         Struct value = (Struct) sinkRecord.value();
         for (Field field : sinkRecord.valueSchema().fields()) {
-            addRowValues(tableName, icebergRecord, field, value);
+            String columnName = field.name();
+
+            boolean contains = columnNames.contains(columnName);
+            if (contains) {
+                addRowValues(tableName, icebergRecord, field, value);
+            } else {
+                throw new DbDmlException(
+                        "iceberg表" + tableName + "数据结构中不存在columnName:" + columnName);
+            }
         }
         icebergRecord.setOp(2);
         apply(tableName, icebergRecord);
@@ -362,6 +421,8 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
         TaskWriter<Record> taskWriter = taskWriterCache.get(tableName);
         if (taskWriter == null) {
             Table icebergTable = getTable(tableName);
+            // icebergTable.refresh(); // refresh the metadata of the table
+
             taskWriter = writerFactory.create(icebergTable, taskId);
             taskWriterCache.put(tableName, taskWriter);
         }
@@ -393,7 +454,7 @@ public class IcebergDialect extends AbstractDialect<Table, Type> {
             WriteResult result;
             try {
                 result = taskWriter.complete();
-            } catch (IOException e) {
+            } catch (CommitFailedException | IOException e) {
                 throw new DbDmlException("iceberg flush 失败.", e);
             }
 

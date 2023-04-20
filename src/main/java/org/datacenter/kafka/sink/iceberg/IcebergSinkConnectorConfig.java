@@ -44,10 +44,6 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
     public static final String WAREHOUSE_DEFAULT = null;
     private static final String WAREHOUSE_DOC = ".";
 
-    public static final String TABLE_PREFIX_KEY = "iceberg.table-default.prefix";
-    public static final String TABLE_PREFIX_DEFAULT = "iceberg_";
-    private static final String TABLE_PREFIX_DOC = "自动创建的iceberg表的表名前缀.";
-
     public static final String TABLE_AUTO_CREATE_KEY = "iceberg.table-default.auto-create";
     public static final boolean TABLE_AUTO_CREATE_DEFAULT = true;
     private static final String TABLE_AUTO_CREATE_DOC = "是否自动创建表.";
@@ -103,12 +99,6 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
                         TABLE_AUTO_CREATE_DEFAULT,
                         ConfigDef.Importance.LOW,
                         TABLE_AUTO_CREATE_DOC)
-                .define(
-                        TABLE_PREFIX_KEY,
-                        ConfigDef.Type.STRING,
-                        TABLE_PREFIX_DEFAULT,
-                        ConfigDef.Importance.LOW,
-                        TABLE_PREFIX_DOC)
                 .define(
                         TABLE_PROPERTIES_PARQUET_BATCHSIZE_BYTES_KEY,
                         ConfigDef.Type.INT,
@@ -186,12 +176,6 @@ public class IcebergSinkConnectorConfig extends AbstractConnectorConfig {
         Boolean isTableAutoCreate = this.getBoolean(TABLE_AUTO_CREATE_KEY);
         this.properties.put(TABLE_AUTO_CREATE_KEY, isTableAutoCreate.toString());
         return isTableAutoCreate;
-    }
-
-    public String getTablePrefix() {
-        String getTablePrefix = this.getString(TABLE_PREFIX_KEY);
-        this.properties.put(TABLE_PREFIX_KEY, getTablePrefix);
-        return getTablePrefix;
     }
 
     public int parquetBatchSizeInBytes() {

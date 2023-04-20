@@ -19,3 +19,4 @@ test.sqlite
 *.db-journal
 /ignite
 /dependency-reduced-pom.xml
+/.vscode

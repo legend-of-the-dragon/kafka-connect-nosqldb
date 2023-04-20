@@ -59,10 +59,10 @@ public abstract class AbstractSinkTask extends SinkTask {
             }
 
             int writeCount = 0;
-
             for (SinkRecord sinkRecord : records) {
 
                 String tableName = this.getTableName(sinkRecord.topic());
+
                 if (sinkRecord.key() == null) {
                     throw new DbDmlException("table:" + tableName + ",sinkRecord.key() == null");
                 }
@@ -255,12 +255,19 @@ public abstract class AbstractSinkTask extends SinkTask {
         dialect.stop();
     }
 
-    public String getTableName(String topic) {
+    Map<String, String> tableNameCache = new HashMap<>();
 
-        return (new TopicNaming(
-                        this.sinkConfig.topicReplacePrefix,
-                        this.sinkConfig.tableNamePrefix,
-                        sinkConfig.table_name_format))
-                .tableName(topic);
+    public String getTableName(String topic) {
+        String tableName = tableNameCache.get(topic);
+        if (tableName == null) {
+            tableName =
+                    (new TopicNaming(
+                                    this.sinkConfig.topicReplacePrefix,
+                                    this.sinkConfig.tableNamePrefix,
+                                    sinkConfig.table_name_format))
+                            .tableName(topic);
+            tableNameCache.put(topic, tableName);
+        }
+        return tableName;
     }
 }
