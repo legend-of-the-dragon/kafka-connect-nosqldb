@@ -8,6 +8,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.datacenter.kafka.TopicNaming;
 import org.datacenter.kafka.sink.exception.DbDdlException;
 import org.datacenter.kafka.sink.exception.DbDmlException;
+import org.datacenter.kafka.sink.ignite.IgniteDialect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,6 +170,10 @@ public abstract class AbstractSinkTask extends SinkTask {
      */
     private void schemaChanged(String tableName, SinkRecord sinkRecord) {
 
+        if (dialect instanceof IgniteDialect) {
+            return;
+        }
+
         Schema newKeySchema = sinkRecord.keySchema();
         Schema newValueSchema = sinkRecord.valueSchema();
 
@@ -264,9 +269,9 @@ public abstract class AbstractSinkTask extends SinkTask {
         if (tableName == null) {
             tableName =
                     (new TopicNaming(
-                                    this.sinkConfig.topicReplacePrefix,
-                                    this.sinkConfig.tableNamePrefix,
-                                    sinkConfig.table_name_format))
+                            this.sinkConfig.topicReplacePrefix,
+                            this.sinkConfig.tableNamePrefix,
+                            sinkConfig.table_name_format))
                             .tableName(topic);
             tableNameCache.put(topic, tableName);
         }
