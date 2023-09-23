@@ -45,9 +45,10 @@ public class IgniteDialect
 
     public final String VALUE_SUFFIX = ".Value";
 
+    private final GridGain gridGain;
     public IgniteDialect(IgniteSinkConnectorConfig sinkConfig) {
         this.sinkConfig = sinkConfig;
-        DataGrid.SINK.init(this.sinkConfig.igniteCfg());
+        gridGain = new GridGain(this.sinkConfig.igniteCfg());
     }
 
     @Override
@@ -62,15 +63,15 @@ public class IgniteDialect
 
     private IgniteDataStreamer<Object, Object> getDataStreamer(String cacheName) {
 
-        IgniteState state = Ignition.state(DataGrid.SINK.getIgniteName());
+        IgniteState state = Ignition.state(gridGain.getIgniteName());
         log.info("ignite sink state:{}", state);
         if (state != IgniteState.STARTED) {
-            DataGrid.SINK.init(this.sinkConfig.igniteCfg());
+            gridGain.init(this.sinkConfig.igniteCfg());
         }
 
-        DataGrid.SINK.ensureCache(cacheName);
+        gridGain.ensureCache(cacheName);
         IgniteDataStreamer<Object, Object> igniteDataStreamer =
-                DataGrid.SINK.dataStreamer(cacheName);
+                gridGain.dataStreamer(cacheName);
 
         igniteDataStreamer.allowOverwrite(true);
         igniteDataStreamer.keepBinary(true);
@@ -223,7 +224,7 @@ public class IgniteDialect
     private BinaryObject createIgniteBinaryObject(Struct struct, String typeName) {
 
         Schema schema = struct.schema();
-        IgniteBinary binary = DataGrid.SINK.binary();
+        IgniteBinary binary = gridGain.binary();
         BinaryObjectBuilder binaryObjectBuilder = binary.builder(typeName);
         schema.fields()
                 .forEach(

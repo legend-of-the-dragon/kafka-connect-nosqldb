@@ -21,11 +21,11 @@
     <groupId>io.datacenter</groupId>
     <artifactId>nosqldb-kafka-connect</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <name>nosqldb-kafka-connect</name>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>11</java.version>
         <kafka-connect.version>3.4.0</kafka-connect.version>
         <gridgain.version>8.8.16</gridgain.version>
         <kudu.version>1.16.0</kudu.version>
@@ -43,7 +43,7 @@
         <repository>
             <id>confluent</id>
             <name>Confluent</name>
-            <url>http://packages.confluent.io/maven/</url>
+            <url>https://packages.confluent.io/maven/</url>
         </repository>
         <repository>
             <id>GridGain External Repository</id>
@@ -184,6 +184,22 @@
 
         <!-- iceberg dependency -->
         <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-schema-registry-client</artifactId>
+            <version>7.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-avro-serializer</artifactId>
+            <version>7.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-connect-avro-converter</artifactId>
+            <version>7.3.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.iceberg</groupId>
             <artifactId>iceberg-api</artifactId>
             <version>${iceberg.version}</version>
@@ -288,20 +304,21 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.11.0</version>
                 <inherited>true</inherited>
                 <configuration>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
                         <!--<arg>-Werror</arg>-->
                     </compilerArgs>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/assembly/development.xml</descriptor>
@@ -321,7 +338,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

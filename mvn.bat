@@ -1,0 +1,1 @@
+mvn clean package shade:shade -Dmaven.test.skip=true  -Dcheckstyle.skip=true -Dmaven.javadoc.skip=true

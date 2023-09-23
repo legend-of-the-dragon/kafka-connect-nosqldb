@@ -18,24 +18,22 @@ import java.net.URL;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Deprecated
 /**
- *
  * ignite 辅助工具类
  *
  * @author sky @Date 2022-05-10
  * @discription
  */
-public enum DataGrid implements AutoCloseable {
-    SOURCE,
-    SINK;
+public class GridGain implements AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(DataGrid.class);
+    private static final Logger log = LoggerFactory.getLogger(GridGain.class);
     private final Semaphore gridLock = new Semaphore(1);
     private final AtomicInteger igniteClientCnt = new AtomicInteger(0);
-    private volatile Ignite ignite;
+    private Ignite ignite;
 
-    DataGrid() {}
+    public GridGain(String cfgPath) {
+        init(cfgPath);
+    }
 
     private static IgniteConfiguration createConfiguration(String cfgPath, String gridName) {
         IgniteConfiguration cfg;
@@ -127,7 +125,7 @@ public enum DataGrid implements AutoCloseable {
             }
 
             this.igniteClientCnt.incrementAndGet();
-            log.info("ignite sink client init " + this.name());
+            log.info("ignite sink client init " + this.ignite.name());
         } catch (InterruptedException e) {
             log.error("ignite sink client init exception.", e);
             throw new ConnectException(e);
@@ -142,7 +140,7 @@ public enum DataGrid implements AutoCloseable {
         this.closeIgnite();
 
         IgniteConfiguration cfg =
-                createConfiguration(cfgPath, String.format("KAFKA-%s-CONNECTOR", this.name()));
+                createConfiguration(cfgPath, String.format("KAFKA-%s-CONNECTOR", this.ignite.name()));
         cfg.setIncludeEventTypes(
                 EventType.EVT_NODE_SEGMENTED, EventType.EVT_CLIENT_NODE_DISCONNECTED);
         this.ignite = Ignition.start(cfg);
@@ -182,7 +180,7 @@ public enum DataGrid implements AutoCloseable {
 
     private void closeIgnite() {
         if (this.ignite == null) {
-            Ignition.stopAll(true);
+            log.error("ignite sink client close error,ignite == null.");
         } else {
             this.ignite.close();
         }
@@ -216,7 +214,7 @@ public enum DataGrid implements AutoCloseable {
 
     private void ensureInitialized() {
         if (this.ignite == null) {
-            throw new IllegalStateException(String.format("%s is not initialized.", this.name()));
+            throw new IllegalStateException(String.format("%s is not initialized.", this.ignite.name()));
         }
     }
 }
