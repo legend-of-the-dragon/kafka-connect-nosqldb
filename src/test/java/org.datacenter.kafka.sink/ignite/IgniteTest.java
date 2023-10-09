@@ -3,14 +3,14 @@ package org.datacenter.kafka.sink.ignite;
 import org.junit.Test;
 
 public class IgniteTest {
-    GridGain gridGain;
+
     @Test
     public void testExecDdlSql() {
 
-        gridGain = new GridGain("e:\\app\\ignite-9f.xml");
+        DataGrid.SINK.init("e:\\app\\ignite-9f.xml");
 
         try {
-            gridGain.execDdlSql(
+            DataGrid.SINK.execDdlSql(
                     "CREATE TABLE `db51014_bee_dev_sys_user3` (\n"
                             + "  id int,\n"
                             + "  username varchar,\n"

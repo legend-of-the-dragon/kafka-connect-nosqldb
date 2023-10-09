@@ -27,7 +27,7 @@
     <properties>
         <java.version>11</java.version>
         <kafka-connect.version>3.4.0</kafka-connect.version>
-        <gridgain.version>8.8.16</gridgain.version>
+        <gridgain.version>8.8.33</gridgain.version>
         <kudu.version>1.16.0</kudu.version>
         <iceberg.version>1.2.0</iceberg.version>
         <hadoop.version>3.2.4</hadoop.version>

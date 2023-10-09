@@ -18,7 +18,6 @@ import java.net.URL;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Deprecated
 /**
  *
  * ignite 辅助工具类
