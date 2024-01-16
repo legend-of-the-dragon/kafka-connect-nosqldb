@@ -1,5 +1,8 @@
 package org.datacenter.kafka.sink.kudu;
 
+import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageExtract;
+import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
+
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.connect.data.Field;
@@ -26,9 +29,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.datacenter.kafka.util.SinkRecordUtil.getStructOfConfigMessageExtract;
-import static org.datacenter.kafka.util.SinkRecordUtil.schema2String;
 
 /**
  * KuduDialect
@@ -79,6 +79,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     @Override
     public boolean tableExists(String tableName) throws DbDdlException {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         Boolean tableExists = tableExistsCache.get(tableName);
         if (tableExists != null) {
             return tableExists;
@@ -95,6 +96,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
 
     public KuduTable getTable(String tableName) throws DbDdlException {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         KuduTable kuduTable = kuduTableCache.get(tableName);
         if (kuduTable == null) {
 
@@ -105,6 +107,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     }
 
     private KuduTable getKuduTable(String tableName) {
+
+        tableName = tableName.toLowerCase(Locale.ROOT);
         KuduTable kuduTable;
         try {
             kuduTable = getKuduClient().openTable(tableName);
@@ -113,9 +117,11 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
         }
         return kuduTable;
     }
+
     @Override
     public List<String> getKeyNames(String tableName) {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         KuduTable table = getTable(tableName);
 
         return table.getSchema().getPrimaryKeyColumns().stream()
@@ -127,6 +133,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     public boolean needChangeTableStructure(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         boolean hasNewFields = false;
         boolean allowRecordFieldLessThanTableField =
                 sinkConfig.allowRecordFieldsLessThanTableFields;
@@ -255,6 +262,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     public void alterTable(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         KuduTable kuduTable = getTable(tableName);
         AlterTableOptions alterTableOptions = new AlterTableOptions();
         Map<String, Type> changeKeyColumnSchemaTypes = new HashMap<>();
@@ -410,6 +418,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     public void createTable(String tableName, Schema keySchema, Schema valueSchema)
             throws DbDdlException {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         if (tableExists(tableName)) {
             return;
         }
@@ -526,7 +535,8 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
             Type kuduSchemaType = getDialectSchemaType(fieldSchemaType, fieldSchemaName);
             if (kuduSchemaType != null) {
                 columnSchemaBuilder =
-                        new ColumnSchema.ColumnSchemaBuilder(fieldName, kuduSchemaType);
+                        new ColumnSchema.ColumnSchemaBuilder(
+                                fieldName, kuduSchemaType);
                 if (isKey) {
                     columnSchemaBuilder.key(true);
                 } else {
@@ -638,6 +648,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     @Override
     public boolean applyUpsertRecord(String tableName, SinkRecord sinkRecord) {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         Struct valueStruct =
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.value(), sinkConfig.messageExtract);
@@ -674,6 +685,7 @@ public class KuduDialect extends AbstractDialect<KuduTable, Type> {
     @Override
     public boolean applyDeleteRecord(String tableName, SinkRecord sinkRecord) {
 
+        tableName = tableName.toLowerCase(Locale.ROOT);
         Struct keyStruct =
                 getStructOfConfigMessageExtract(
                         (Struct) sinkRecord.key(), sinkConfig.messageExtract);
