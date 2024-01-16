@@ -17,7 +17,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Properties;
 
-public class KafkaDataTest {
+public class KafkaAvroDataTest {
     private static final String TOPIC = "test12";
     private static final String SCHEMA_REGISTRY_URL = "http://test03.bigdata.9f.cn:8081";
     private static final String USER_SCHEMA =
