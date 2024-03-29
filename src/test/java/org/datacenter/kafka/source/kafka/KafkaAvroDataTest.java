@@ -5,21 +5,29 @@ import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
 
 public class KafkaAvroDataTest {
     private static final String TOPIC = "test12";
-    private static final String SCHEMA_REGISTRY_URL = "http://test03.bigdata.9f.cn:8081";
+    private static final String SCHEMA_REGISTRY_URL = "http://10.255.200.92:8081";
     private static final String USER_SCHEMA =
             "{\"type\":\"record\","
                     + "\"name\":\"myUser\","
@@ -35,7 +43,8 @@ public class KafkaAvroDataTest {
     public void testProductKafkaAvroData() throws RestClientException, IOException {
 
         Properties properties = new Properties();
-        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "test03.bigdata.9f.cn:9092");
+        properties.setProperty(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "10.255.200.92:9092");
         properties.setProperty(ProducerConfig.ACKS_CONFIG, "all");
         properties.setProperty(ProducerConfig.RETRIES_CONFIG, "10");
         properties.setProperty(
@@ -66,7 +75,7 @@ public class KafkaAvroDataTest {
         GenericRecord avroKey;
         GenericRecord avroValue;
         ProducerRecord<GenericRecord, GenericRecord> record;
-        for (int i = 0; i < 10000_0000; i++) {
+        for (int i = 0; i < 10_0000; i++) {
             avroKey = new GenericData.Record(keySchema);
             avroKey.put("key_id", i);
 
@@ -127,5 +136,44 @@ public class KafkaAvroDataTest {
 
         // 发送完所有消息后关闭生产者
         producer.close();
+    }
+
+    @Test
+    public void testKafkaAvroConsumerExample() {
+
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "10.255.200.92:9092");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test");
+        props.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                KafkaAvroDeserializer.class.getName());
+        props.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                KafkaAvroDeserializer.class.getName());
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        props.put(
+                KafkaAvroDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                "http://10.255.200.92:8081");
+        props.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, false);
+
+        Consumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
+
+        try {
+            consumer.subscribe(Collections.singletonList("test12"));
+
+            while (true) {
+                ConsumerRecords<String, GenericRecord> records =
+                        consumer.poll(Duration.ofMillis(100));
+                records.forEach(
+                        record -> {
+                            System.out.printf(
+                                    "offset = %d, key = %s, value = %s%n",
+                                    record.offset(), record.key(), record.value());
+                        });
+            }
+        } finally {
+            consumer.close();
+        }
     }
 }
