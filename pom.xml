@@ -26,9 +26,10 @@
 
     <properties>
         <java.version>11</java.version>
-        <kafka-connect.version>3.6.0</kafka-connect.version>
+        <kafka-connect.version>3.7.0</kafka-connect.version>
         <gridgain.version>8.8.33</gridgain.version>
-        <kudu.version>1.16.0</kudu.version>
+        <ignite.version>2.16.0</ignite.version>
+        <kudu.version>1.17.0</kudu.version>
         <iceberg.version>1.2.0</iceberg.version>
         <hadoop.version>3.2.4</hadoop.version>
         <lombok.version>1.18.26</lombok.version>
@@ -37,7 +38,7 @@
         <netty.version>4.1.90.Final</netty.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.package.home>target/${project.artifactId}-${project.version}-package</project.package.home>
-        <confluent.version>7.4.0</confluent.version>
+        <confluent.version>7.6.1</confluent.version>
     </properties>
 
     <repositories>
@@ -86,23 +87,30 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.gridgain</groupId>
+            <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-core</artifactId>
-            <version>${gridgain.version}</version>
+            <version>${ignite.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.gridgain</groupId>
+            <groupId>org.apache.ignite</groupId>
+            <artifactId>ignite-indexing</artifactId>
+            <version>${ignite.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-spring</artifactId>
-            <version>${gridgain.version}</version>
+            <version>${ignite.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.gridgain</groupId>
+            <groupId>org.apache.ignite</groupId>
             <artifactId>ignite-zookeeper</artifactId>
-            <version>${gridgain.version}</version>
+            <version>${ignite.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -110,14 +118,16 @@
             <groupId>org.apache.kudu</groupId>
             <artifactId>kudu-client</artifactId>
             <version>${kudu.version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
+            <scope>compile</scope>
         </dependency>
         <!--iceberg start-->
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
@@ -180,11 +190,11 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>${log4j2.version}</version>
-        </dependency>
+        </dependency>-->
 
 
         <!-- iceberg dependency -->
-        <dependency>
+       <!-- <dependency>
             <groupId>io.confluent</groupId>
             <artifactId>kafka-schema-registry-client</artifactId>
             <version>${confluent.version}</version>
@@ -261,17 +271,18 @@
             <artifactId>hadoop-common</artifactId>
             <version>${hadoop.version}</version>
         </dependency>
-        <!--<dependency>
-            <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-flink-runtime-1.15</artifactId>
-            <version>1.1.0</version>
-        </dependency>-->
+
 
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>3.1.5</version>
-        </dependency>
+        </dependency>-->
+        <!--<dependency>
+           <groupId>org.apache.iceberg</groupId>
+           <artifactId>iceberg-flink-runtime-1.15</artifactId>
+           <version>1.1.0</version>
+       </dependency>-->
         <!--<dependency>
             <groupId>jdk.tools</groupId>
             <artifactId>jdk.tools</artifactId>
@@ -282,7 +293,7 @@
 
         <!--iceberg end -->
 
-        <dependency>
+        <!--<dependency>
             <groupId>io.confluent</groupId>
             <artifactId>replicator-common</artifactId>
             <version>${confluent.version}</version>
@@ -293,7 +304,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+-->
         <dependency>
             <groupId>com.bdwise.prometheus.client</groupId>
             <artifactId>promql_client</artifactId>
@@ -329,7 +340,7 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.6.0</version>
@@ -348,7 +359,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -361,9 +372,6 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <!--<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.spring.Launcher</mainClass>
-                                </transformer>-->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/spring.schemas</resource>
@@ -372,10 +380,39 @@
                                         implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/spring.handlers</resource>
                                 </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Version>1.0</Version>
+                                        <Build-Time>${maven.build.timestamp}</Build-Time>
+                                    </manifestEntries>
+                                </transformer>
                             </transformers>
+                            <!--<filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/*.EC</exclude>
+                                        &lt;!&ndash; 通用匹配，以排除所有签名文件 &ndash;&gt;
+                                        <exclude>META-INF/SIGNINGC.SF</exclude>
+                                        <exclude>META-INF/SIGNINGC.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>-->
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
             </plugin>
         </plugins>
         <resources>
@@ -390,14 +427,14 @@
             <id>standalone</id>
             <build>
                 <plugins>
-                    <plugin>
+                    <!--<plugin>
                         <artifactId>maven-assembly-plugin</artifactId>
                         <configuration>
                             <descriptors>
                                 <descriptor>src/assembly/standalone.xml</descriptor>
                             </descriptors>
                         </configuration>
-                    </plugin>
+                    </plugin>-->
                 </plugins>
             </build>
         </profile>
